@@ -1,0 +1,48 @@
+<Solution>
+  <Folder Name="/gateway/">
+    <Project Path="gateway/ApiGateway/ApiGateway.csproj" />
+  </Folder>
+  <Folder Name="/services/" />
+  <Folder Name="/services/AuthService/" />
+  <Folder Name="/services/AuthService/src/">
+    <Project Path="services/AuthService/src/AuthService.Api/AuthService.Api.csproj" />
+    <Project Path="services/AuthService/src/AuthService.Application/AuthService.Application.csproj" />
+    <Project Path="services/AuthService/src/AuthService.Domain/AuthService.Domain.csproj" />
+    <Project Path="services/AuthService/src/AuthService.Infrastructure/AuthService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/services/ExecutionService/" />
+  <Folder Name="/services/ExecutionService/src/">
+    <Project Path="services/ExecutionService/src/ExecutionService.Api/ExecutionService.Api.csproj" />
+    <Project Path="services/ExecutionService/src/ExecutionService.Core/ExecutionService.Core.csproj" />
+  </Folder>
+  <Folder Name="/services/JobService/" />
+  <Folder Name="/services/JobService/src/">
+    <Project Path="services/JobService/src/JobService.Api/JobService.Api.csproj" />
+    <Project Path="services/JobService/src/JobService.Application/JobService.Application.csproj" />
+    <Project Path="services/JobService/src/JobService.Domain/JobService.Domain.csproj" />
+    <Project Path="services/JobService/src/JobService.Infrastructure/JobService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/services/NotificationService/" />
+  <Folder Name="/services/NotificationService/src/">
+    <Project Path="services/NotificationService/src/NotificationService/NotificationService.csproj" />
+  </Folder>
+  <Folder Name="/services/WorkerService/" />
+  <Folder Name="/services/WorkerService/src/">
+    <Project Path="services/WorkerService/src/WorkerService/WorkerService.csproj" />
+  </Folder>
+  <Folder Name="/shared/" />
+  <Folder Name="/shared/Common/">
+    <Project Path="shared/Common/JobEngine.Shared.Common.csproj" />
+  </Folder>
+  <Folder Name="/shared/Contracts/">
+    <Project Path="shared/Contracts/JobEngine.Shared.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/shared/Logging/">
+    <Project Path="shared/Logging/JobEngine.Shared.Logging.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AuthService.Tests/AuthService.Tests.csproj" />
+    <Project Path="tests/Integration.Tests/Integration.Tests.csproj" />
+    <Project Path="tests/JobService.Tests/JobService.Tests.csproj" />
+  </Folder>
+</Solution>

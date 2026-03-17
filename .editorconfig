@@ -1,0 +1,22 @@
+
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{json,yml,yaml}]
+indent_size = 2
+
+[*.cs]
+# Enforce 'var' where type is obvious
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+# File-scoped namespaces (cleaner, less nesting)
+csharp_style_namespace_declarations = file_scoped:warning
+# Expression-bodied members where it makes sense
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
