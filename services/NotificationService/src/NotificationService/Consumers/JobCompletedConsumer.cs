@@ -1,4 +1,6 @@
+using JobEngine.Shared.Contracts.Jobs;
 using MassTransit;
+using NotificationService.Webhooks;
 
 namespace NotificationService.Consumers;
 

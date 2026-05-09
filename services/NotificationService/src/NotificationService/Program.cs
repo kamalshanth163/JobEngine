@@ -1,5 +1,6 @@
 using MassTransit;
 using NotificationService.Consumers;
+using NotificationService.Webhooks;
 
 var builder = Host.CreateApplicationBuilder(args);
 
