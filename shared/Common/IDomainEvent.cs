@@ -2,7 +2,7 @@ using MediatR;
 
 namespace JobEngine.Shared.Common;
 
-// MediatR INotification = can be published via mediator.Publish()
-// We dispatch these after SaveChangesAsync so they only fire if the
-// DB write succeeded — prevents events for transactions that rolled back
+// INotification = MediatR can publish this via mediator.Publish()
+// We dispatch domain events AFTER SaveChangesAsync so they only fire
+// when the DB transaction committed successfully
 public interface IDomainEvent : INotification { }

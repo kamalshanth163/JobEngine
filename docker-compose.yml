@@ -1,0 +1,128 @@
+# docker-compose.yml — root of the repo
+# Run: docker compose up --build
+# All services, databases, messaging, and observability in one command
+
+services:
+
+  # ── API Gateway (YARP reverse proxy) ──────────────────
+  gateway:
+    build: ./gateway/ApiGateway
+    ports: ["8080:8080"]
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on: [job-service, auth-service]
+    networks: [jobengine]
+
+  # ── Auth Service ──────────────────────────────────────
+  auth-service:
+    build: ./services/AuthService/src/AuthService.Api
+    ports: ["8082:8080"]
+    environment:
+      - ConnectionStrings__Auth=Host=postgres;Database=je_auth;Username=postgres;Password=dev
+      - Redis__Connection=redis:6379
+      - Jwt__Secret=${JWT_SECRET:-dev-secret-change-in-prod-min-32-chars}
+      - Jwt__Issuer=jobengine
+      - Jwt__Audience=jobengine-clients
+    depends_on: [postgres, redis]
+    networks: [jobengine]
+
+  # ── Job Service ───────────────────────────────────────
+  job-service:
+    build: ./services/JobService/src/JobService.Api
+    ports: ["8081:8080"]
+    environment:
+      - ConnectionStrings__Jobs=Host=postgres;Database=je_jobs;Username=postgres;Password=dev
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=guest
+      - RabbitMQ__Password=guest
+      - Redis__Connection=redis:6379
+      - AuthService__Url=http://auth-service:8080
+    depends_on: [postgres, redis, rabbitmq]
+    networks: [jobengine]
+
+  # ── Worker Service (3 replicas = 3 competing workers) ─
+  worker-service:
+    build: ./services/WorkerService/src/WorkerService
+    deploy:
+      replicas: 3
+    environment:
+      - RabbitMQ__Host=rabbitmq
+      - Redis__Connection=redis:6379
+      - ExecutionService__Url=http://execution-service:8080
+      - ConnectionStrings__Jobs=Host=postgres;Database=je_jobs;Username=postgres;Password=dev
+    depends_on: [rabbitmq, redis, execution-service]
+    networks: [jobengine]
+
+  # ── Execution Service ─────────────────────────────────
+  execution-service:
+    build: ./services/ExecutionService/src/ExecutionService.Api
+    ports: ["8084:8080"]
+    networks: [jobengine]
+
+  # ── Notification Service ──────────────────────────────
+  notification-service:
+    build: ./services/NotificationService/src/NotificationService
+    environment:
+      - RabbitMQ__Host=rabbitmq
+      - ConnectionStrings__Jobs=Host=postgres;Database=je_jobs;Username=postgres;Password=dev
+    depends_on: [rabbitmq]
+    networks: [jobengine]
+
+  # ── PostgreSQL ────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: dev
+    volumes: [pgdata:/var/lib/postgresql/data]
+    ports: ["5432:5432"]
+    networks: [jobengine]
+
+  # ── Redis ─────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    networks: [jobengine]
+
+  # ── RabbitMQ (management UI on :15672) ────────────────
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI — guest/guest
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks: [jobengine]
+
+  # ── Prometheus ────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports: ["9090:9090"]
+    networks: [jobengine]
+
+  # ── Grafana ───────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    ports: ["3001:3000"]
+    volumes: [grafana_data:/var/lib/grafana]
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks: [jobengine]
+
+  # ── React Frontend ────────────────────────────────────
+  frontend:
+    build: ./frontend
+    ports: ["5173:5173"]
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    networks: [jobengine]
+
+networks:
+  jobengine:
+    driver: bridge
+
+volumes:
+  pgdata:
+  grafana_data:

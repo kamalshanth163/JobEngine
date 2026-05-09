@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>           <!-- null safety on everywhere -->
+    <ImplicitUsings>enable</ImplicitUsings> <!-- no 'using System;' boilerplate -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors> <!-- strict -->
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+</Project>

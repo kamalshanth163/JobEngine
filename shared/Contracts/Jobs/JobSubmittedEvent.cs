@@ -1,10 +1,10 @@
+// Shared contracts live here so ALL services agree on the message shape.
+// If Job Service publishes this, Worker Service consumes the exact same type.
+// Never define message contracts inside a single service — that creates coupling.
+
 namespace JobEngine.Shared.Contracts.Jobs;
 
-// These are the messages that flow through RabbitMQ between services.
-// 'record' = immutable by default, perfect for message contracts.
-// 'init' setters = can only be set during object initialisation.
-// NEVER change property names without versioning — consumers will break.
-
+// Record = immutable by default, perfect for message contracts
 public sealed record JobSubmittedEvent
 {
     public Guid JobId { get; init; }
