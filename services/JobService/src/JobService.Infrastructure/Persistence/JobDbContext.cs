@@ -1,3 +1,8 @@
+using JobService.Application.Common.Interfaces;
+using JobService.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 namespace JobService.Infrastructure.Persistence;
 
 public class JobsDbContext(DbContextOptions<JobsDbContext> options,

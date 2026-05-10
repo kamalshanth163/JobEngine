@@ -1,0 +1,12 @@
+{
+    "folder-color.pathColors": [
+        {
+            "folderPath": "JobEngine\\gateway\\ApiGateway\\",
+            "color": "foldercolorizer.color_0000ff"
+        },
+        {
+            "folderPath": "JobEngine\\services\\NotificationService\\src\\NotificationService\\",
+            "color": "foldercolorizer.color_00ffff"
+        }
+    ]
+}

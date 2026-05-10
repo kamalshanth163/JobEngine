@@ -1,11 +1,14 @@
+using AuthService.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
 namespace AuthService.Infrastructure.Persistence;
 
 public class AuthDbContext(DbContextOptions<AuthDbContext> options)
     : DbContext(options)
 {
-    public DbSet<Tenant> Tenants  => Set<Tenant>();
-    public DbSet<User>   Users    => Set<User>();
-    public DbSet<ApiKey> ApiKeys  => Set<ApiKey>();
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {

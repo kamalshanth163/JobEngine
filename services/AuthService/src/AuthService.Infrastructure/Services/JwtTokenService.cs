@@ -1,6 +1,11 @@
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Extensions.Options;
+using AuthService.Application.Common.Interfaces;
+using AuthService.Domain.Entities;
+using System.Text;
+using System.Security.Cryptography;
 
 namespace AuthService.Infrastructure.Services;
 
@@ -9,12 +14,12 @@ public sealed class JwtTokenService(IOptions<JwtOptions> _opts) : IJwtTokenServi
     public (string access, string refresh, DateTime expiry)
         GenerateToken(User user, Tenant tenant)
     {
-        var key     = new SymmetricSecurityKey(
+        var key = new SymmetricSecurityKey(
                             Encoding.UTF8.GetBytes(_opts.Value.Secret));
-        var creds   = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expiry  = DateTime.UtcNow.AddMinutes(_opts.Value.ExpiryMinutes);
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var expiry = DateTime.UtcNow.AddMinutes(_opts.Value.ExpiryMinutes);
 
-        var claims = new []
+        var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email,          user.Email),
@@ -25,13 +30,13 @@ public sealed class JwtTokenService(IOptions<JwtOptions> _opts) : IJwtTokenServi
         };
 
         var token = new JwtSecurityToken(
-            issuer:             _opts.Value.Issuer,
-            audience:           _opts.Value.Audience,
-            claims:             claims,
-            expires:            expiry,
+            issuer: _opts.Value.Issuer,
+            audience: _opts.Value.Audience,
+            claims: claims,
+            expires: expiry,
             signingCredentials: creds);
 
-        var access  = new JwtSecurityTokenHandler().WriteToken(token);
+        var access = new JwtSecurityTokenHandler().WriteToken(token);
         var refresh = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
         return (access, refresh, expiry);
     }
@@ -46,9 +51,11 @@ public sealed class JwtTokenService(IOptions<JwtOptions> _opts) : IJwtTokenServi
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(
                     Encoding.UTF8.GetBytes(_opts.Value.Secret)),
-                ValidateIssuer   = true, ValidIssuer   = _opts.Value.Issuer,
-                ValidateAudience = true, ValidAudience = _opts.Value.Audience,
-                ClockSkew        = TimeSpan.FromSeconds(30)
+                ValidateIssuer = true,
+                ValidIssuer = _opts.Value.Issuer,
+                ValidateAudience = true,
+                ValidAudience = _opts.Value.Audience,
+                ClockSkew = TimeSpan.FromSeconds(30)
             }, out _);
         }
         catch { return null; }
@@ -57,8 +64,8 @@ public sealed class JwtTokenService(IOptions<JwtOptions> _opts) : IJwtTokenServi
 
 public sealed class JwtOptions
 {
-    public string Secret        { get; set; } = default!;
-    public string Issuer        { get; set; } = default!;
-    public string Audience      { get; set; } = default!;
-    public int    ExpiryMinutes { get; set; } = 60;
+    public string Secret { get; set; } = default!;
+    public string Issuer { get; set; } = default!;
+    public string Audience { get; set; } = default!;
+    public int ExpiryMinutes { get; set; } = 60;
 }

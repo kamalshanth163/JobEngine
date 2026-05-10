@@ -1,3 +1,6 @@
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
+
 namespace ExecutionService.Core.Handlers;
 
 // Clients plug in their own job types by implementing IJobHandler.

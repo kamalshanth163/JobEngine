@@ -1,3 +1,6 @@
+using System.Text.Json;
+using ExecutionService.Core.Models;
+
 namespace ExecutionService.Core.Handlers;
 
 // Any new job type just implements this one interface
