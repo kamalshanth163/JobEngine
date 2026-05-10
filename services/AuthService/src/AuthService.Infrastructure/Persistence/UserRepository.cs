@@ -22,4 +22,11 @@ public sealed class UserRepository : IUserRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == normalized && u.TenantId == tenantId, ct);
     }
+
+    public async Task<User?> GetAdminByTenantAsync(Guid tenantId, CancellationToken ct = default)
+    {
+        return await _db.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.TenantId == tenantId && u.Role == "admin", ct);
+    }
 }

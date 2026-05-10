@@ -1,4 +1,5 @@
 using AuthService.Application.Commands;
+using AuthService.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,7 +29,11 @@ public sealed class AuthController(IMediator _mediator) : ControllerBase
     }
 
     [HttpGet("tenants/{id:guid}")]
-    public IActionResult GetTenant(Guid id) => Ok(new { id });
+    public async Task<IActionResult> GetTenant(Guid id)
+    {
+        var result = await _mediator.Send(new GetTenantQuery(id));
+        return Ok(new { id = result.Id, slug = result.Slug, name = result.Name, adminEmail = result.AdminEmail });
+    }
 
     [HttpPost("tenants/{tenantId:guid}/keys")]
     public async Task<IActionResult> CreateApiKey(Guid tenantId,
@@ -41,8 +46,11 @@ public sealed class AuthController(IMediator _mediator) : ControllerBase
 }
 
 public record RegisterTenantRequest(
-    string TenantName, string Slug,
-    string AdminEmail, string AdminPassword);
+    string TenantName,
+    string Slug,
+    string AdminEmail,
+    string AdminPassword
+);
 
 public record CreateApiKeyRequest(string? Name);
 

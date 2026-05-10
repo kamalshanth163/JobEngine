@@ -19,6 +19,7 @@ public interface IUserRepository
 {
     Task<User?> GetByEmailAndTenantAsync(string email, Guid tenantId, CancellationToken ct = default);
     Task AddAsync(User user, CancellationToken ct = default);
+    Task<User?> GetAdminByTenantAsync(Guid tenantId, CancellationToken ct = default);
 }
 
 public interface IApiKeyRepository

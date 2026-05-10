@@ -1,0 +1,44 @@
+### AuthService HTTP tests
+# Set `baseUrl` to the running AuthService URL. Default for local `dotnet run` is http://localhost:5019
+@baseUrl = http://localhost:5177
+@TENANT_ID =  # Capture TenantId from Register response here
+@ACCESS_TOKEN =  # Capture AccessToken from Login response here
+
+### Register Tenant (creates tenant + admin user)
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "tenantName": "Acme Inc",
+  "slug": "acme",
+  "adminEmail": "admin@acme.test",
+  "adminPassword": "Password123!"
+}
+
+### Login (returns AccessToken and RefreshToken)
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@acme.test",
+  "password": "Password123!",
+  "tenantSlug": "acme"
+}
+
+### Create API Key (requires Bearer token returned from Login)
+### Replace {{ACCESS_TOKEN}} with the `AccessToken` value from Login response.
+POST {{baseUrl}}/api/v1/auth/tenants/{{TENANT_ID}}/keys
+Authorization: Bearer {{ACCESS_TOKEN}}
+Content-Type: application/json
+
+{
+  "name": "Postman key"
+}
+
+### Get Tenant (simple) — replace {id}
+GET {{baseUrl}}/api/v1/auth/tenants/{{TENANT_ID}}
+
+### Notes
+- After `register`, capture `TenantId` and `AccessToken` from the response.
+- Use `TenantId` as `{{TENANT_ID}}` for subsequent requests.
+- If running in Docker compose, set `@baseUrl = http://localhost:8082` instead.
