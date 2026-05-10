@@ -19,9 +19,14 @@ app.MapHealthChecks("/health");
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
-    await scope.ServiceProvider
-        .GetRequiredService<AuthDbContext>()
-        .Database.MigrateAsync();
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var conn = config.GetConnectionString("Auth");
+    if (!string.IsNullOrWhiteSpace(conn))
+    {
+        await scope.ServiceProvider
+            .GetRequiredService<AuthDbContext>()
+            .Database.MigrateAsync();
+    }
 }
 
 await app.RunAsync();

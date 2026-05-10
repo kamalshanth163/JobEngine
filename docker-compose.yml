@@ -3,7 +3,6 @@
 # All services, databases, messaging, and observability in one command
 
 services:
-
   # ── API Gateway (YARP reverse proxy) ──────────────────
   gateway:
     build: ./gateway/ApiGateway
@@ -72,8 +71,11 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: dev
-    volumes: [pgdata:/var/lib/postgresql/data]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infrastructure/docker/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
     ports: ["5432:5432"]
     networks: [jobengine]
 
@@ -87,7 +89,7 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     ports:
-      - "5672:5672"   # AMQP protocol
+      - "5672:5672" # AMQP protocol
       - "15672:15672" # Management UI — guest/guest
     environment:
       RABBITMQ_DEFAULT_USER: guest
