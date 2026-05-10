@@ -1,10 +1,13 @@
 using AuthService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using JobEngine.Shared.Common;
+using AuthService.Application.Common.Interfaces;
 
 namespace AuthService.Infrastructure.Persistence;
 
 public class AuthDbContext(DbContextOptions<AuthDbContext> options)
-    : DbContext(options)
+    : DbContext(options), IUnitOfWork
 {
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<User> Users => Set<User>();

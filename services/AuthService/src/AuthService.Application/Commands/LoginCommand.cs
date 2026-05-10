@@ -1,4 +1,6 @@
 using MediatR;
+using AuthService.Application.Common.Interfaces;
+using JobEngine.Shared.Common;
 
 namespace AuthService.Application.Commands;
 
@@ -12,14 +14,14 @@ public sealed record LoginResult(
     string AccessToken,
     string RefreshToken,
     DateTime ExpiresAt,
-    Guid   TenantId
+    Guid TenantId
 );
 
 public sealed class LoginHandler(
-    IUserRepository  _users,
+    IUserRepository _users,
     ITenantRepository _tenants,
-    IPasswordHasher   _hasher,
-    IJwtTokenService  _jwt
+    IPasswordHasher _hasher,
+    IJwtTokenService _jwt
 ) : IRequestHandler<LoginCommand, LoginResult>
 {
     public async Task<LoginResult> Handle(

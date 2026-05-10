@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="MediatR" Version="14.1.0" />
+    <ProjectReference Include="..\..\..\..\shared\Common\JobEngine.Shared.Common.csproj" />
   </ItemGroup>
 
 </Project>

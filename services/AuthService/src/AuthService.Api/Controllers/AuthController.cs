@@ -29,10 +29,21 @@ public sealed class AuthController(IMediator _mediator) : ControllerBase
 
     [HttpGet("tenants/{id:guid}")]
     public IActionResult GetTenant(Guid id) => Ok(new { id });
+
+    [HttpPost("tenants/{tenantId:guid}/keys")]
+    public async Task<IActionResult> CreateApiKey(Guid tenantId,
+        [FromBody] CreateApiKeyRequest req,
+        CancellationToken ct)
+    {
+        var result = await _mediator.Send(new CreateApiKeyCommand(tenantId, req.Name), ct);
+        return CreatedAtAction(nameof(GetTenant), new { id = result.Id }, result);
+    }
 }
 
 public record RegisterTenantRequest(
     string TenantName, string Slug,
     string AdminEmail, string AdminPassword);
+
+public record CreateApiKeyRequest(string? Name);
 
 public record LoginRequest(string Email, string Password, string TenantSlug);

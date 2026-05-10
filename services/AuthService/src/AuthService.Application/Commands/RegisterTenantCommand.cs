@@ -1,6 +1,7 @@
 using MediatR;
 using FluentValidation;
 using AuthService.Application.Common.Interfaces;
+using JobEngine.Shared.Common;
 using AuthService.Domain.Entities;
 
 namespace AuthService.Application.Commands;
@@ -66,8 +67,8 @@ public sealed class RegisterTenantHandler(
         await _uow.SaveChangesAsync(ct);
 
         // 5. Issue immediate JWT so client is logged in after registration
-        var token = _jwt.GenerateToken(user, tenant);
+        var (access, refresh, expiry) = _jwt.GenerateToken(user, tenant);
 
-        return new RegisterTenantResult(tenant.Id, tenant.Slug, token);
+        return new RegisterTenantResult(tenant.Id, tenant.Slug, access);
     }
 }

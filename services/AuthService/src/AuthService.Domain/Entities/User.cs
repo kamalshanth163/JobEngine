@@ -1,5 +1,7 @@
 namespace AuthService.Domain.Entities;
 
+using JobEngine.Shared.Common;
+
 public sealed class User : BaseEntity
 {
     public string Email { get; private set; } = default!;
