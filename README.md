@@ -1,6 +1,6 @@
 # JobEngine
 
-A production-grade distributed job processing SaaS built in .NET 8.
+A production-grade distributed job processing SaaS built in .NET 10.
 
 ## Architecture
 

@@ -486,3 +486,6 @@ $RECYCLE.BIN/
 .env.local
 infrastructure/data/
 *.user
+
+# Other files
+Content/
