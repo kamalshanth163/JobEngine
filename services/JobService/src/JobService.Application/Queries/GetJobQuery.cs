@@ -1,4 +1,7 @@
 using MediatR;
+using JobService.Application.Common.Interfaces;
+using JobService.Domain.Entities;
+using System;
 
 namespace JobService.Application.Queries;
 

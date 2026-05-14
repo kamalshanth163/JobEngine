@@ -1,3 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using JobService.Application.Common.Interfaces;
+using JobService.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
 namespace JobService.Infrastructure.Persistence.Repositories;
 
 public sealed class JobRepository(JobsDbContext _ctx) : IJobRepository

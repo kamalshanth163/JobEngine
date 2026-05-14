@@ -1,7 +1,7 @@
 using JobService.Application.Commands;
 using JobService.Application.Common.Interfaces;
 using JobService.Application.Queries;
-using MassTransit.Mediator;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobService.Api.Controllers;

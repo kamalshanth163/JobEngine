@@ -39,7 +39,7 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
         b.HasIndex(j => new { j.TenantId, j.Status, j.ScheduledAt })
          .HasDatabaseName("idx_jobs_tenant_status_scheduled");
 
-        b.HasMany(j => j.Logs)
+        b.HasMany<JobLog>()
          .WithOne()
          .HasForeignKey("JobId")
          .OnDelete(DeleteBehavior.Cascade);

@@ -1,3 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using JobService.Domain.Entities;
+
 namespace JobService.Application.Common.Interfaces;
 
 public interface IJobRepository
@@ -18,4 +24,14 @@ public interface ITenantContext
 {
     Guid TenantId { get; }
     string TenantSlug { get; }
+}
+
+public interface IEventPublisher
+{
+    Task PublishAsync<T>(T @event, CancellationToken ct = default) where T : class;
+}
+
+public interface ITenantQuotaService
+{
+    Task EnforceAsync(Guid tenantId, CancellationToken ct = default);
 }

@@ -17,7 +17,7 @@ public sealed record SubmitJobCommand(
 public sealed class SubmitJobHandler(
     IJobRepository _jobs,
     ITenantQuotaService _quota,
-    IPublishEndpoint _bus,   // MassTransit abstracts RabbitMQ
+    IEventPublisher _bus,
     IUnitOfWork _uow
 ) : IRequestHandler<SubmitJobCommand, Guid>
 {
@@ -38,17 +38,17 @@ public sealed class SubmitJobHandler(
         //    This is the Outbox pattern — DB is source of truth
         await _uow.SaveChangesAsync(ct);
 
-        // 4. Publish event to RabbitMQ via MassTransit
-        //    Workers will consume this and execute the job
+        // 4. Publish event (via IEventPublisher). Workers will consume this.
         job.MarkQueued();
-        await _bus.Publish(new JobSubmittedEvent
+        await _bus.PublishAsync(new JobSubmittedEvent
         {
             JobId = job.Id,
             TenantId = job.TenantId,
             JobType = job.Type,
             Payload = job.Payload,
             Priority = job.Priority,
-            MaxAttempts = job.MaxAttempts
+            MaxAttempts = job.MaxAttempts,
+            SubmittedAt = DateTime.UtcNow
         }, ct);
 
         await _uow.SaveChangesAsync(ct); // save Queued status

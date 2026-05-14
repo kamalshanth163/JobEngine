@@ -1,6 +1,8 @@
 using JobService.Application.Common.Interfaces;
+using JobService.Infrastructure.Messaging;
 using JobService.Infrastructure.Persistence;
 using JobService.Infrastructure.Persistence.Repositories;
+using JobService.Infrastructure.Services;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -38,10 +40,15 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IJobRepository, JobRepository>();
-        services.AddScoped<IUnitOfWork>(sp =>
-            sp.GetRequiredService<JobsDbContext>());
-        services.AddHttpContextAccessor();
-        services.AddScoped<ITenantContext, HttpTenantContext>();
+        services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+        // Event publisher wrapper for MassTransit IPublishEndpoint
+        services.AddScoped<IEventPublisher>(sp =>
+            new MassTransitEventPublisher(sp.GetRequiredService<IPublishEndpoint>()));
+
+        // Tenant quota enforcement service
+        services.AddScoped<ITenantQuotaService, TenantQuotaService>();
+
+        // Note: HttpTenantContext and HttpContextAccessor are provided by the Api project.
         return services;
     }
 }

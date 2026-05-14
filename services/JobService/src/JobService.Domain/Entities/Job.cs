@@ -28,6 +28,7 @@ public sealed class Job
     public DateTime? StartedAt { get; private set; }
     public DateTime? CompletedAt { get; private set; }
     public DateTime CreatedAt { get; private set; }
+    public List<JobLog> Logs { get; private set; } = new();
 
     private Job() { }
 
