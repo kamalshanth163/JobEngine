@@ -487,5 +487,7 @@ $RECYCLE.BIN/
 infrastructure/data/
 *.user
 
-# Other files
+
+# Other foldres to ignore
+.vscode/
 Content/
