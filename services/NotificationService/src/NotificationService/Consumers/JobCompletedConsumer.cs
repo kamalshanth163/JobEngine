@@ -27,6 +27,8 @@ public sealed class JobFailedConsumer(
 {
     public async Task Consume(ConsumeContext<JobFailedEvent> ctx)
     {
+        _log.LogInformation("Handling failed job event for job {Id}; final={IsFinal}", ctx.Message.JobId, ctx.Message.IsFinal);
+
         if (ctx.Message.IsFinal) // only fire webhook when fully dead-lettered
         {
             await _webhooks.DeliverAsync(

@@ -34,15 +34,6 @@ public sealed class WebhookDeliveryService(
         var signature = ComputeSignature(body, endpoint.Secret);
 
         var client = _http.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Post, endpoint.Url)
-        {
-            Content = new StringContent(body, Encoding.UTF8, "application/json")
-        };
-
-        // Standard webhook headers
-        request.Headers.Add("X-JobEngine-Event", eventType);
-        request.Headers.Add("X-JobEngine-Signature", $"sha256={signature}");
-        request.Headers.Add("X-JobEngine-Timestamp", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString());
 
         // Retry up to 3 times: immediate, 30s, 5min
         var delays = new[] { TimeSpan.Zero, TimeSpan.FromSeconds(30),
@@ -52,7 +43,17 @@ public sealed class WebhookDeliveryService(
             if (delay > TimeSpan.Zero) await Task.Delay(delay, ct);
             try
             {
-                var response = await client.SendAsync(request, ct);
+                using var request = new HttpRequestMessage(HttpMethod.Post, endpoint.Url)
+                {
+                    Content = new StringContent(body, Encoding.UTF8, "application/json")
+                };
+
+                // Standard webhook headers
+                request.Headers.Add("X-JobEngine-Event", eventType);
+                request.Headers.Add("X-JobEngine-Signature", $"sha256={signature}");
+                request.Headers.Add("X-JobEngine-Timestamp", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString());
+
+                using var response = await client.SendAsync(request, ct);
                 if (response.IsSuccessStatusCode) return; // delivered!
             }
             catch (Exception ex)

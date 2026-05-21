@@ -5,7 +5,9 @@ using NotificationService.Webhooks;
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddScoped<WebhookDeliveryService>();
+builder.Services.AddSingleton<IWebhookRepository, ConfigurationWebhookRepository>();
 builder.Services.AddHttpClient();
+builder.Services.Configure<WebhookOptions>(builder.Configuration.GetSection(WebhookOptions.SectionName));
 
 // MassTransit — subscribe to job events from RabbitMQ
 builder.Services.AddMassTransit(x =>
@@ -15,9 +17,14 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((ctx, cfg) =>
     {
-        cfg.Host(builder.Configuration["RabbitMQ__Host"], h =>
+        var host = builder.Configuration["RabbitMQ__Host"] ?? "localhost";
+        var username = builder.Configuration["RabbitMQ__Username"] ?? "guest";
+        var password = builder.Configuration["RabbitMQ__Password"] ?? "guest";
+
+        cfg.Host(host, h =>
         {
-            h.Username("guest"); h.Password("guest");
+            h.Username(username);
+            h.Password(password);
         });
         cfg.ConfigureEndpoints(ctx);
     });
