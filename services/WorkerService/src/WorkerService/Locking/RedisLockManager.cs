@@ -2,6 +2,12 @@ using StackExchange.Redis;
 
 namespace WorkerService.Locking;
 
+public interface IDistributedLockManager
+{
+    Task<IAsyncDisposable?> TryAcquireAsync(
+        string resource, TimeSpan ttl, CancellationToken ct = default);
+}
+
 public sealed class RedisLockManager(IDatabase _db) : IDistributedLockManager
 {
     private readonly string _instanceId = Guid.NewGuid().ToString("N");

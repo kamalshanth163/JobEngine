@@ -12,11 +12,11 @@ public sealed class ExecutionServiceClient(HttpClient _http) : IExecutionService
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync(ct);
-            return ExecutionResult.Failure($"HTTP {(int)response.StatusCode}: {error}");
+            return ExecutionResult.Fail($"HTTP {(int)response.StatusCode}: {error}");
         }
 
         return await response.Content
-            .ReadFromJsonAsync<ExecutionResult>(ct) ?? ExecutionResult.Failure("No response");
+            .ReadFromJsonAsync<ExecutionResult>(ct) ?? ExecutionResult.Fail("No response");
     }
 }
 
@@ -29,6 +29,6 @@ public sealed record ExecuteJobRequest(Guid JobId, string JobType, string Payloa
 
 public sealed record ExecutionResult(bool Success, string? Output, string? Error)
 {
-    public static ExecutionResult Success(string? output) => new(true, output, null);
-    public static ExecutionResult Failure(string error) => new(false, null, error);
+    public static ExecutionResult Ok(string? output) => new(true, output, null);
+    public static ExecutionResult Fail(string error) => new(false, null, error);
 }

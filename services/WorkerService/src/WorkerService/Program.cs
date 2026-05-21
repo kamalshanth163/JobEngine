@@ -1,10 +1,22 @@
 using MassTransit;
+using JobService.Application.Common.Interfaces;
+using JobService.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 using WorkerService.Clients;
 using WorkerService.Consumers;
 using WorkerService.Locking;
+using WorkerService.Services;
 
 var builder = Host.CreateApplicationBuilder(args);
+
+builder.Services.AddSingleton<ITenantContext, WorkerTenantContext>();
+
+builder.Services.AddDbContext<JobsDbContext>(opts =>
+    opts.UseNpgsql(builder.Configuration.GetConnectionString("Jobs")
+        ?? throw new InvalidOperationException("Missing ConnectionStrings:Jobs")));
+
+builder.Services.AddScoped<IJobStatusUpdater, JobStatusUpdater>();
 
 // Redis — single multiplexer shared across all consumers
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
@@ -56,11 +68,6 @@ builder.Services.AddMassTransit(x =>
 builder.Services.AddSingleton<IDistributedLockManager, RedisLockManager>();
 builder.Services.AddHttpClient<IExecutionServiceClient, ExecutionServiceClient>(c =>
     c.BaseAddress = new Uri(builder.Configuration["ExecutionService__Url"]!));
-
-builder.Services.AddJobEngineObservability("worker-service");
-builder.Services.AddHealthChecks()
-    .AddRabbitMQ()
-    .AddRedis(builder.Configuration["Redis__Connection"]!);
 
 var app = builder.Build();
 await app.RunAsync();

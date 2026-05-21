@@ -2,6 +2,7 @@ using JobEngine.Shared.Contracts.Jobs;
 using MassTransit;
 using StackExchange.Redis;
 using WorkerService.Clients;
+using WorkerService.Locking;
 using WorkerService.Services;
 using ExecutionResult = WorkerService.Clients.ExecutionResult;
 
@@ -61,17 +62,13 @@ public sealed class JobSubmittedConsumer(
         try
         {
             // ── STEP 4: Delegate to Execution Service via HTTP ───────────
-            result = await _executor.ExecuteAsync(new ExecuteJobRequest
-            {
-                JobId = msg.JobId,
-                JobType = msg.JobType,
-                Payload = msg.Payload
-            }, ct);
+            result = await _executor.ExecuteAsync(
+                new ExecuteJobRequest(msg.JobId, msg.JobType, msg.Payload), ct);
         }
         catch (Exception ex)
         {
             // Execution Service unreachable — fail the job
-            result = ExecutionResult.Failure(ex.Message);
+            result = ExecutionResult.Fail(ex.Message);
         }
 
         // ── STEP 5: Update status + publish outcome event ─────────────
