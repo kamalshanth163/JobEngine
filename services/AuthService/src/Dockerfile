@@ -17,6 +17,10 @@ RUN dotnet publish services/AuthService/src/AuthService.Api/AuthService.Api.cspr
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
+USER root
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+  && rm -rf /var/lib/apt/lists/*
 # .NET runtime images provide APP_UID for non-root execution
 USER $APP_UID
 COPY --from=build /app/publish .

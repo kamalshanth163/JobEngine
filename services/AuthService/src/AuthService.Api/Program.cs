@@ -15,17 +15,38 @@ var app = builder.Build();
 app.MapControllers();
 app.MapHealthChecks("/health");
 
-// Auto-apply migrations on startup (dev only)
-if (app.Environment.IsDevelopment())
+// Auto-apply migrations on startup in all environments.
+// In containers, Postgres can come up slightly later, so retry briefly.
+for (var attempt = 1; attempt <= 10; attempt++)
 {
-    using var scope = app.Services.CreateScope();
-    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-    var conn = config.GetConnectionString("Auth");
-    if (!string.IsNullOrWhiteSpace(conn))
+    try
     {
-        await scope.ServiceProvider
-            .GetRequiredService<AuthDbContext>()
-            .Database.MigrateAsync();
+        using var scope = app.Services.CreateScope();
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var logger = scope.ServiceProvider
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger("AuthService.Startup");
+
+        var conn = config.GetConnectionString("Auth");
+        if (!string.IsNullOrWhiteSpace(conn))
+        {
+            await scope.ServiceProvider
+                .GetRequiredService<AuthDbContext>()
+                .Database.MigrateAsync();
+        }
+
+        break;
+    }
+    catch (Exception ex) when (attempt < 10)
+    {
+        using var scope = app.Services.CreateScope();
+        var logger = scope.ServiceProvider
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger("AuthService.Startup");
+        logger.LogWarning(ex,
+            "Auth DB migration attempt {Attempt}/10 failed. Retrying in 3s...",
+            attempt);
+        await Task.Delay(TimeSpan.FromSeconds(3));
     }
 }
 
