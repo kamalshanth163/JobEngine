@@ -23,18 +23,33 @@ public static class DependencyInjection
                 b => b.MigrationsAssembly(typeof(JobsDbContext).Assembly.FullName)));
 
         // Redis
-        services.AddSingleton<IConnectionMultiplexer>(
-            ConnectionMultiplexer.Connect(configuration["Redis__Connection"]!));
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+        {
+            var redisConnection = configuration["Redis__Connection"];
+            if (string.IsNullOrWhiteSpace(redisConnection))
+                throw new InvalidOperationException("Missing Redis__Connection configuration");
+
+            var redisOptions = ConfigurationOptions.Parse(redisConnection);
+            redisOptions.AbortOnConnectFail = false;
+            redisOptions.ConnectRetry = 5;
+            redisOptions.ConnectTimeout = 5000;
+
+            return ConnectionMultiplexer.Connect(redisOptions);
+        });
 
         // MassTransit — connects to RabbitMQ for publishing events
         services.AddMassTransit(x =>
         {
             x.UsingRabbitMq((ctx, cfg) =>
             {
-                cfg.Host(configuration["RabbitMQ__Host"], h =>
+                var rabbitHost = configuration["RabbitMQ__Host"] ?? "rabbitmq";
+                var rabbitUsername = configuration["RabbitMQ__Username"] ?? "guest";
+                var rabbitPassword = configuration["RabbitMQ__Password"] ?? "guest";
+
+                cfg.Host(rabbitHost, h =>
                 {
-                    h.Username(configuration["RabbitMQ__Username"] ?? "guest");
-                    h.Password(configuration["RabbitMQ__Password"] ?? "guest");
+                    h.Username(rabbitUsername);
+                    h.Password(rabbitPassword);
                 });
             });
         });

@@ -36,10 +36,14 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((ctx, cfg) =>
     {
-        cfg.Host(builder.Configuration["RabbitMQ__Host"], h =>
+        var rabbitHost = builder.Configuration["RabbitMQ__Host"] ?? "rabbitmq";
+        var rabbitUsername = builder.Configuration["RabbitMQ__Username"] ?? "guest";
+        var rabbitPassword = builder.Configuration["RabbitMQ__Password"] ?? "guest";
+
+        cfg.Host(rabbitHost, h =>
         {
-            h.Username(builder.Configuration["RabbitMQ__Username"] ?? "guest");
-            h.Password(builder.Configuration["RabbitMQ__Password"] ?? "guest");
+            h.Username(rabbitUsername);
+            h.Password(rabbitPassword);
         });
 
         cfg.ReceiveEndpoint("job-submitted", e =>
