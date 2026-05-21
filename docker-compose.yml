@@ -5,7 +5,9 @@
 services:
   # ── API Gateway (YARP reverse proxy) ──────────────────
   gateway:
-    build: ./gateway/ApiGateway
+    build:
+      context: .
+      dockerfile: gateway/ApiGateway/Dockerfile
     ports: ["8080:8080"]
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -14,7 +16,9 @@ services:
 
   # ── Auth Service ──────────────────────────────────────
   auth-service:
-    build: ./services/AuthService/src/AuthService.Api
+    build:
+      context: .
+      dockerfile: services/AuthService/src/Dockerfile
     ports: ["8082:8080"]
     environment:
       - ConnectionStrings__Auth=Host=postgres;Database=je_auth;Username=postgres;Password=dev
@@ -27,7 +31,9 @@ services:
 
   # ── Job Service ───────────────────────────────────────
   job-service:
-    build: ./services/JobService/src/JobService.Api
+    build:
+      context: .
+      dockerfile: services/JobService/src/Dockerfile
     ports: ["8081:8080"]
     environment:
       - ConnectionStrings__Jobs=Host=postgres;Database=je_jobs;Username=postgres;Password=dev
@@ -41,7 +47,9 @@ services:
 
   # ── Worker Service (3 replicas = 3 competing workers) ─
   worker-service:
-    build: ./services/WorkerService/src/WorkerService
+    build:
+      context: .
+      dockerfile: services/WorkerService/src/WorkerService/Dockerfile
     deploy:
       replicas: 3
     environment:
@@ -54,13 +62,17 @@ services:
 
   # ── Execution Service ─────────────────────────────────
   execution-service:
-    build: ./services/ExecutionService/src/ExecutionService.Api
+    build:
+      context: .
+      dockerfile: services/ExecutionService/src/Dockerfile
     ports: ["8084:8080"]
     networks: [jobengine]
 
   # ── Notification Service ──────────────────────────────
   notification-service:
-    build: ./services/NotificationService/src/NotificationService
+    build:
+      context: .
+      dockerfile: services/NotificationService/src/NotificationService/Dockerfile
     environment:
       - RabbitMQ__Host=rabbitmq
       - ConnectionStrings__Jobs=Host=postgres;Database=je_jobs;Username=postgres;Password=dev
@@ -116,6 +128,7 @@ services:
   # ── React Frontend ────────────────────────────────────
   frontend:
     build: ./frontend
+    profiles: ["frontend"]
     ports: ["5173:5173"]
     environment:
       - VITE_API_URL=http://localhost:8080

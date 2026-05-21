@@ -1,11 +1,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY JobEngine.sln .
+COPY JobEngine.slnx .
 COPY gateway/ApiGateway/ApiGateway.csproj gateway/ApiGateway/
 RUN dotnet restore gateway/ApiGateway/ApiGateway.csproj
 COPY . .
 RUN dotnet publish gateway/ApiGateway/ApiGateway.csproj \
-  -c Release -o /app/publish --no-restore
+  -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app

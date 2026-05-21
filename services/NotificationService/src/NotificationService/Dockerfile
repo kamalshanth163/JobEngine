@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY JobEngine.sln .
+COPY JobEngine.slnx .
 COPY shared/Contracts/JobEngine.Shared.Contracts.csproj shared/Contracts/
 COPY shared/Common/JobEngine.Shared.Common.csproj shared/Common/
 COPY services/NotificationService/src/NotificationService/NotificationService.csproj services/NotificationService/src/NotificationService/

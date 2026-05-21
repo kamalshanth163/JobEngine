@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 # Copy .csproj files FIRST for layer caching
 # dotnet restore only re-runs when .csproj changes, not every code change
-COPY JobEngine.sln .
+COPY JobEngine.slnx .
 COPY shared/Contracts/JobEngine.Shared.Contracts.csproj shared/Contracts/
 COPY shared/Common/JobEngine.Shared.Common.csproj shared/Common/
 COPY shared/Logging/JobEngine.Shared.Logging.csproj shared/Logging/
@@ -17,9 +17,8 @@ RUN dotnet publish services/AuthService/src/AuthService.Api/AuthService.Api.cspr
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
-# Non-root user for security — never run as root in production
-RUN addgroup --system appgroup && adduser --system appuser --ingroup appgroup
-USER appuser
+# .NET runtime images provide APP_UID for non-root execution
+USER $APP_UID
 COPY --from=build /app/publish .
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080

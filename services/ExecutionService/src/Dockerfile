@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY JobEngine.sln .
+COPY JobEngine.slnx .
 COPY shared/Contracts/JobEngine.Shared.Contracts.csproj shared/Contracts/
 COPY shared/Common/JobEngine.Shared.Common.csproj shared/Common/
 COPY services/ExecutionService/src/ExecutionService.Core/ExecutionService.Core.csproj services/ExecutionService/src/ExecutionService.Core/
@@ -12,8 +12,7 @@ RUN dotnet publish services/ExecutionService/src/ExecutionService.Api/ExecutionS
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
-RUN addgroup --system appgroup && adduser --system appuser --ingroup appgroup
-USER appuser
+USER $APP_UID
 COPY --from=build /app/publish .
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
