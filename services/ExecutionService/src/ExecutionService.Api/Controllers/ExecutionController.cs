@@ -16,7 +16,7 @@ public sealed class ExecutionController(JobHandlerRegistry _registry) : Controll
         var result = await _registry.ExecuteAsync(req.JobType, req.Payload, ct);
         sw.Stop();
 
-        return Ok(ExecutionResult.Ok(result, sw.Elapsed));
+        return Ok(result with { Duration = sw.Elapsed });
     }
 }
 

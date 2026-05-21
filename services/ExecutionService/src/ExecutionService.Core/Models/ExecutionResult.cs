@@ -7,9 +7,9 @@ public sealed record ExecutionResult
     public string? Error { get; init; }
     public TimeSpan Duration { get; init; }
 
-    public static ExecutionResult Ok(string? output, TimeSpan duration) =>
-        new() { Success = true, Output = output, Duration = duration };
+    public static ExecutionResult Ok(string? output) =>
+        new() { Success = true, Output = output };
 
-    public static ExecutionResult Fail(string error, TimeSpan duration) =>
-        new() { Success = false, Error = error, Duration = duration };
+    public static ExecutionResult Fail(string error) =>
+        new() { Success = false, Error = error };
 }

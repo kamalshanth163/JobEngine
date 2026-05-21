@@ -1,4 +1,3 @@
-using System.Text.Json;
 using ExecutionService.Core.Models;
 
 namespace ExecutionService.Core.Handlers;
@@ -22,8 +21,11 @@ public sealed class JobHandlerRegistry
     public async Task<ExecutionResult> ExecuteAsync(
         string jobType, string payload, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(jobType))
+            return ExecutionResult.Fail("Job type is required");
+
         if (!_handlers.TryGetValue(jobType, out var handler))
-            return ExecutionResult.Failure(
+            return ExecutionResult.Fail(
                 $"No handler registered for job type '{jobType}'");
 
         // Enforce 5-minute execution timeout via linked CancellationToken
@@ -34,28 +36,19 @@ public sealed class JobHandlerRegistry
         try
         {
             var result = await handler.HandleAsync(payload, timeoutCts.Token);
-            return ExecutionResult.Success(result);
+            return ExecutionResult.Ok(result);
         }
-        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested && timeoutCts.IsCancellationRequested)
         {
-            return ExecutionResult.Failure("Job timed out after 5 minutes");
+            return ExecutionResult.Fail("Job timed out after 5 minutes");
+        }
+        catch (OperationCanceledException)
+        {
+            return ExecutionResult.Fail("Job execution was canceled");
         }
         catch (Exception ex)
         {
-            return ExecutionResult.Failure(ex.Message);
+            return ExecutionResult.Fail(ex.Message);
         }
-    }
-}
-
-// Example handler — clients register handlers like this
-public sealed class SendEmailHandler(IEmailService _email) : IJobHandler
-{
-    public string JobType => "send-email";
-
-    public async Task<string?> HandleAsync(string payload, CancellationToken ct)
-    {
-        var req = JsonSerializer.Deserialize<SendEmailPayload>(payload)!;
-        await _email.SendAsync(req.To, req.Subject, req.Body, ct);
-        return $"Email sent to {req.To}";
     }
 }
