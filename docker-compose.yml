@@ -88,7 +88,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./infrastructure/docker/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
-    ports: ["5432:5432"]
+    ports: ["5433:5432"]
     networks: [jobengine]
 
   # ── Redis ─────────────────────────────────────────────
