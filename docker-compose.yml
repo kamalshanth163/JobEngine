@@ -41,6 +41,9 @@ services:
       - RabbitMQ__Username=guest
       - RabbitMQ__Password=guest
       - Redis__Connection=redis:6379
+      - Jwt__Secret=${JWT_SECRET:-dev-secret-change-in-prod-min-32-chars}
+      - Jwt__Issuer=jobengine
+      - Jwt__Audience=jobengine-clients
       - AuthService__Url=http://auth-service:8080
     depends_on: [postgres, redis, rabbitmq]
     networks: [jobengine]

@@ -2,6 +2,7 @@ using JobService.Application.Commands;
 using JobService.Application.Common.Interfaces;
 using JobService.Application.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobService.Api.Controllers;
@@ -10,6 +11,7 @@ namespace JobService.Api.Controllers;
 public sealed class JobsController(IMediator _mediator, ITenantContext _tenant)
     : ControllerBase
 {
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Submit(
         [FromBody] SubmitJobRequest req, CancellationToken ct)
@@ -20,6 +22,7 @@ public sealed class JobsController(IMediator _mediator, ITenantContext _tenant)
         return CreatedAtAction(nameof(Get), new { id }, id);
     }
 
+    [Authorize]
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id, CancellationToken ct)
     {
@@ -28,6 +31,7 @@ public sealed class JobsController(IMediator _mediator, ITenantContext _tenant)
         return job is null ? NotFound() : Ok(job);
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct)
     {
