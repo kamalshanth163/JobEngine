@@ -1,6 +1,7 @@
 using AuthService.Application.Commands;
 using AuthService.Application.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuthService.Api.Controllers;
@@ -35,11 +36,16 @@ public sealed class AuthController(IMediator _mediator) : ControllerBase
         return Ok(new { id = result.Id, slug = result.Slug, name = result.Name, adminEmail = result.AdminEmail });
     }
 
+    [Authorize(Roles = "admin")]
     [HttpPost("tenants/{tenantId:guid}/keys")]
     public async Task<IActionResult> CreateApiKey(Guid tenantId,
         [FromBody] CreateApiKeyRequest req,
         CancellationToken ct)
     {
+        var tenantClaim = User.FindFirst("tenant_id")?.Value;
+        if (!Guid.TryParse(tenantClaim, out var claimTenantId) || claimTenantId != tenantId)
+            return Forbid();
+
         var result = await _mediator.Send(new CreateApiKeyCommand(tenantId, req.Name), ct);
         return CreatedAtAction(nameof(GetTenant), new { id = result.Id }, result);
     }

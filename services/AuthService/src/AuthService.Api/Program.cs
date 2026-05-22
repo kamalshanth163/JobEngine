@@ -1,17 +1,41 @@
 using AuthService.Application;
 using AuthService.Infrastructure;
 using AuthService.Infrastructure.Persistence;
+using AuthService.Infrastructure.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddApplication();      // MediatR, FluentValidation
 builder.Services.AddInfrastructure(builder.Configuration);
+var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
+          ?? throw new InvalidOperationException("Jwt configuration is missing.");
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Secret)),
+            ValidateIssuer = true,
+            ValidIssuer = jwt.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwt.Audience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(30)
+        };
+    });
+builder.Services.AddAuthorization();
 builder.Services.AddHealthChecks();
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");
 
