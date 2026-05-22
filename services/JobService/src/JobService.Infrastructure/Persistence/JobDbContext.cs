@@ -21,6 +21,12 @@ public class JobsDbContext(DbContextOptions<JobsDbContext> options,
         // To bypass (admin only): use .IgnoreQueryFilters()
         mb.Entity<Job>()
           .HasQueryFilter(j => j.TenantId == tenantContext.TenantId);
+
+                mb.Entity<JobLog>()
+                    .HasOne<Job>()
+                    .WithMany(j => j.Logs)
+                    .HasForeignKey(jl => jl.JobId)
+                    .OnDelete(DeleteBehavior.Cascade);
     }
 }
 
@@ -39,9 +45,5 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
         b.HasIndex(j => new { j.TenantId, j.Status, j.ScheduledAt })
          .HasDatabaseName("idx_jobs_tenant_status_scheduled");
 
-        b.HasMany<JobLog>()
-         .WithOne()
-         .HasForeignKey("JobId")
-         .OnDelete(DeleteBehavior.Cascade);
     }
 }
