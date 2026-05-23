@@ -1,0 +1,125 @@
+services:
+  gateway:
+    build: null
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    pull_policy: always
+    container_name: je-debug-gateway
+    entrypoint: ["sh", "-lc"]
+    working_dir: /src
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ReverseProxy__Clusters__auth-cluster__Destinations__auth-service__Address: http://auth-service:8080
+      ReverseProxy__Clusters__jobs-cluster__Destinations__job-service__Address: http://job-service:8080
+      ReverseProxy__Clusters__execution-cluster__Destinations__execution-service__Address: http://execution-service:8080
+      DOTNET_EnableDiagnostics: "1"
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+    volumes:
+      - ./:/src
+    command:
+      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project gateway/ApiGateway/ApiGateway.csproj --no-launch-profile --urls http://0.0.0.0:8080
+
+  auth-service:
+    build: null
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    pull_policy: always
+    container_name: je-debug-auth-service
+    entrypoint: ["sh", "-lc"]
+    working_dir: /src
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Auth: Host=postgres;Database=je_auth;Username=postgres;Password=dev
+      Redis__Connection: redis:6379
+      Jwt__Secret: ${JWT_SECRET:-dev-secret-change-in-prod-min-32-chars}
+      Jwt__Issuer: jobengine
+      Jwt__Audience: jobengine-clients
+      DOTNET_EnableDiagnostics: "1"
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+    volumes:
+      - ./:/src
+    command:
+      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project services/AuthService/src/AuthService.Api/AuthService.Api.csproj --no-launch-profile --urls http://0.0.0.0:8080
+
+  job-service:
+    build: null
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    pull_policy: always
+    container_name: je-debug-job-service
+    entrypoint: ["sh", "-lc"]
+    working_dir: /src
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Jobs: Host=postgres;Database=je_jobs;Username=postgres;Password=dev
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Username: guest
+      RabbitMQ__Password: guest
+      Redis__Connection: redis:6379
+      Jwt__Secret: ${JWT_SECRET:-dev-secret-change-in-prod-min-32-chars}
+      Jwt__Issuer: jobengine
+      Jwt__Audience: jobengine-clients
+      AuthService__Url: http://auth-service:8080
+      DOTNET_EnableDiagnostics: "1"
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+    volumes:
+      - ./:/src
+    command:
+      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project services/JobService/src/JobService.Api/JobService.Api.csproj --no-launch-profile --urls http://0.0.0.0:8080
+
+  execution-service:
+    build: null
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    pull_policy: always
+    container_name: je-debug-execution-service
+    entrypoint: ["sh", "-lc"]
+    working_dir: /src
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      DOTNET_EnableDiagnostics: "1"
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+    volumes:
+      - ./:/src
+    command:
+      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project services/ExecutionService/src/ExecutionService.Api/ExecutionService.Api.csproj --no-launch-profile --urls http://0.0.0.0:8080
+
+  worker-service:
+    build: null
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    pull_policy: always
+    container_name: je-debug-worker-service
+    deploy:
+      replicas: 1
+    entrypoint: ["sh", "-lc"]
+    working_dir: /src
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      RabbitMQ__Host: rabbitmq
+      Redis__Connection: redis:6379
+      ExecutionService__Url: http://execution-service:8080
+      ConnectionStrings__Jobs: Host=postgres;Database=je_jobs;Username=postgres;Password=dev
+      DOTNET_EnableDiagnostics: "1"
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+    volumes:
+      - ./:/src
+    command:
+      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project services/WorkerService/src/WorkerService/WorkerService.csproj --no-launch-profile
+
+  notification-service:
+    build: null
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    pull_policy: always
+    container_name: je-debug-notification-service
+    entrypoint: ["sh", "-lc"]
+    working_dir: /src
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      RabbitMQ__Host: rabbitmq
+      ConnectionStrings__Jobs: Host=postgres;Database=je_jobs;Username=postgres;Password=dev
+      DOTNET_EnableDiagnostics: "1"
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+    volumes:
+      - ./:/src
+    command:
+      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project services/NotificationService/src/NotificationService/NotificationService.csproj --no-launch-profile
