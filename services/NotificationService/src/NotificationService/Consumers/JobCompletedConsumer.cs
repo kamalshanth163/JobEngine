@@ -1,4 +1,4 @@
-using JobEngine.Shared.Contracts.Jobs;
+using JobEngine.Shared.Contracts.Events;
 using MassTransit;
 using NotificationService.Webhooks;
 

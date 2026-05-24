@@ -1,4 +1,4 @@
-using JobEngine.Shared.Contracts.Jobs;
+using JobEngine.Shared.Contracts.Events;
 using MassTransit;
 using StackExchange.Redis;
 using WorkerService.Clients;
@@ -27,7 +27,7 @@ public sealed class JobSubmittedConsumer(
         var msg = ctx.Message;
         var ct = ctx.CancellationToken;
 
-        // ── STEP 1: Idempotency check ──────────────────────────────────
+        // -- STEP 1: Idempotency check ----------------------------------
         // Redis key expires after 24h. If this job was already processed
         // (duplicate delivery from RabbitMQ), skip silently — do NOT throw
         // (throwing causes requeue which makes the problem worse)
@@ -43,7 +43,7 @@ public sealed class JobSubmittedConsumer(
             return;
         }
 
-        // ── STEP 2: Distributed Redis lock ────────────────────────────
+        // -- STEP 2: Distributed Redis lock ----------------------------
         // Even though idempotency key handles duplicates, the lock prevents
         // two workers racing on the same message in edge cases
         await using var redisLock = await _lockManager
@@ -55,13 +55,13 @@ public sealed class JobSubmittedConsumer(
             return;
         }
 
-        // ── STEP 3: Claim job in database ─────────────────────────────
+        // -- STEP 3: Claim job in database -----------------------------
         await _statusUpdater.MarkRunningAsync(msg.JobId, _workerId, ct);
 
         ExecutionResult result;
         try
         {
-            // ── STEP 4: Delegate to Execution Service via HTTP ───────────
+            // -- STEP 4: Delegate to Execution Service via HTTP -----------
             result = await _executor.ExecuteAsync(
                 new ExecuteJobRequest(msg.JobId, msg.JobType, msg.Payload), ct);
         }
@@ -71,7 +71,7 @@ public sealed class JobSubmittedConsumer(
             result = ExecutionResult.Fail(ex.Message);
         }
 
-        // ── STEP 5: Update status + publish outcome event ─────────────
+        // -- STEP 5: Update status + publish outcome event -------------
         if (result.Success)
         {
             await _statusUpdater.MarkCompletedAsync(msg.JobId, result.Output, ct);

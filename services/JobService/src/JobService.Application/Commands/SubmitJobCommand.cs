@@ -1,5 +1,5 @@
 using MediatR;
-using JobEngine.Shared.Contracts.Jobs;
+using JobEngine.Shared.Contracts.Events;
 using JobService.Application.Common.Interfaces;
 using JobService.Domain.Entities;
 

@@ -3,7 +3,7 @@
 # All services, databases, messaging, and observability in one command
 
 services:
-  # ── API Gateway (YARP reverse proxy) ──────────────────
+  # -- API Gateway (YARP reverse proxy) ------------------
   gateway:
     build:
       context: .
@@ -14,7 +14,7 @@ services:
     depends_on: [job-service, auth-service]
     networks: [jobengine]
 
-  # ── Auth Service ──────────────────────────────────────
+  # -- Auth Service --------------------------------------
   auth-service:
     build:
       context: .
@@ -29,7 +29,7 @@ services:
     depends_on: [postgres, redis]
     networks: [jobengine]
 
-  # ── Job Service ───────────────────────────────────────
+  # -- Job Service ---------------------------------------
   job-service:
     build:
       context: .
@@ -48,7 +48,7 @@ services:
     depends_on: [postgres, redis, rabbitmq]
     networks: [jobengine]
 
-  # ── Worker Service (3 replicas = 3 competing workers) ─
+  # -- Worker Service (3 replicas = 3 competing workers) -
   worker-service:
     build:
       context: .
@@ -63,7 +63,7 @@ services:
     depends_on: [rabbitmq, redis, execution-service]
     networks: [jobengine]
 
-  # ── Execution Service ─────────────────────────────────
+  # -- Execution Service ---------------------------------
   execution-service:
     build:
       context: .
@@ -71,7 +71,7 @@ services:
     ports: ["8084:8080"]
     networks: [jobengine]
 
-  # ── Notification Service ──────────────────────────────
+  # -- Notification Service ------------------------------
   notification-service:
     build:
       context: .
@@ -82,7 +82,7 @@ services:
     depends_on: [rabbitmq]
     networks: [jobengine]
 
-  # ── PostgreSQL ────────────────────────────────────────
+  # -- PostgreSQL ----------------------------------------
   postgres:
     image: postgres:16-alpine
     environment:
@@ -94,13 +94,13 @@ services:
     ports: ["5433:5432"]
     networks: [jobengine]
 
-  # ── Redis ─────────────────────────────────────────────
+  # -- Redis ---------------------------------------------
   redis:
     image: redis:7-alpine
     ports: ["6379:6379"]
     networks: [jobengine]
 
-  # ── RabbitMQ (management UI on :15672) ────────────────
+  # -- RabbitMQ (management UI on :15672) ----------------
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     ports:
@@ -111,7 +111,7 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     networks: [jobengine]
 
-  # ── Prometheus ────────────────────────────────────────
+  # -- Prometheus ----------------------------------------
   prometheus:
     image: prom/prometheus:latest
     volumes:
@@ -119,7 +119,7 @@ services:
     ports: ["9090:9090"]
     networks: [jobengine]
 
-  # ── Grafana ───────────────────────────────────────────
+  # -- Grafana -------------------------------------------
   grafana:
     image: grafana/grafana:latest
     ports: ["3001:3000"]
@@ -128,7 +128,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     networks: [jobengine]
 
-  # ── React Frontend ────────────────────────────────────
+  # -- React Frontend ------------------------------------
   frontend:
     build: ./frontend
     profiles: ["frontend"]
