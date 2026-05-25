@@ -31,14 +31,17 @@ public sealed class JobStatusUpdater(
 
     public async Task<JobFailureState> MarkFailedAsync(Guid jobId, string error, CancellationToken ct)
     {
+        // Query without tenant filters because workers operate on jobs by message ID.
         var job = await _ctx.Jobs.IgnoreQueryFilters()
             .FirstOrDefaultAsync(j => j.Id == jobId, ct);
         if (job is null)
             throw new InvalidOperationException($"Job {jobId} not found");
 
+        // Domain logic decides whether this failure should remain retryable or become DeadLetter.
         job.MarkFailed(error);
         await _ctx.SaveChangesAsync(ct);
 
+        // Return a compact failure snapshot so the consumer can branch without reloading the job.
         var isFinal = job.Status == JobStatus.DeadLetter;
         return new JobFailureState(job.Attempt, job.MaxAttempts, isFinal);
     }

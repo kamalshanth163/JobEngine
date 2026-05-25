@@ -1,4 +1,4 @@
-# Execution, Worker, and Notification Services: Deep Dive
+# Worker, Execution, and Notification Services: Deep Dive
 
 This guide explains what these services do, how they connect, and what happens step-by-step when a job is submitted.
 

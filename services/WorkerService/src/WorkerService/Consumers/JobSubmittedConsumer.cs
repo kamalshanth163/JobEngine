@@ -85,18 +85,25 @@ public sealed class JobSubmittedConsumer(
         }
         else
         {
+            // Persist failed attempt first so emitted event reflects committed DB state.
             var failure = await _statusUpdater.MarkFailedAsync(msg.JobId, result.Error!, ct);
+
+            // Emit a failure event for every attempt; downstream services can track retries
+            // and react differently when IsFinal=true (terminal/dead-letter condition).
             await _bus.Publish(new JobFailedEvent
             {
                 JobId = msg.JobId,
                 TenantId = msg.TenantId,
                 Error = result.Error!,
+                // Attempt number comes from DB after MarkFailed increments/status transition.
                 AttemptNum = failure.Attempt,
+                // True when max attempts are exhausted and job moved to DeadLetter.
                 IsFinal = failure.IsFinal
             }, ct);
 
-            // If not final, throw so MassTransit requeues for retry
-            // MassTransit + configured retry policy handles the backoff
+            // We publish JobFailedEvent on every failed attempt for observability/alerts.
+            // For non-final failures, throw so MassTransit keeps ownership of retry timing/backoff.
+            // Final failures are acknowledged here and remain in DeadLetter state.
             if (!failure.IsFinal)
                 throw new JobExecutionException(result.Error!);
         }
