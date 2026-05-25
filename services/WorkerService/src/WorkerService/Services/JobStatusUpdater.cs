@@ -1,4 +1,5 @@
 using JobService.Infrastructure.Persistence;
+using JobService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace WorkerService.Services;
@@ -28,12 +29,18 @@ public sealed class JobStatusUpdater(
         await _ctx.SaveChangesAsync(ct);
     }
 
-    public async Task MarkFailedAsync(Guid jobId, string error, CancellationToken ct)
+    public async Task<JobFailureState> MarkFailedAsync(Guid jobId, string error, CancellationToken ct)
     {
         var job = await _ctx.Jobs.IgnoreQueryFilters()
             .FirstOrDefaultAsync(j => j.Id == jobId, ct);
-        job?.MarkFailed(error);
+        if (job is null)
+            throw new InvalidOperationException($"Job {jobId} not found");
+
+        job.MarkFailed(error);
         await _ctx.SaveChangesAsync(ct);
+
+        var isFinal = job.Status == JobStatus.DeadLetter;
+        return new JobFailureState(job.Attempt, job.MaxAttempts, isFinal);
     }
 }
 
@@ -41,5 +48,7 @@ public interface IJobStatusUpdater
 {
     Task MarkRunningAsync(Guid jobId, string workerId, CancellationToken ct);
     Task MarkCompletedAsync(Guid jobId, string? result, CancellationToken ct);
-    Task MarkFailedAsync(Guid jobId, string error, CancellationToken ct);
+    Task<JobFailureState> MarkFailedAsync(Guid jobId, string error, CancellationToken ct);
 }
+
+public sealed record JobFailureState(int Attempt, int MaxAttempts, bool IsFinal);

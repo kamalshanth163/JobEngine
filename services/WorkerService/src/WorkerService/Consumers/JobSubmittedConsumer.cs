@@ -85,20 +85,19 @@ public sealed class JobSubmittedConsumer(
         }
         else
         {
-            var isFinal = msg.MaxAttempts <= 1;
-            await _statusUpdater.MarkFailedAsync(msg.JobId, result.Error!, ct);
+            var failure = await _statusUpdater.MarkFailedAsync(msg.JobId, result.Error!, ct);
             await _bus.Publish(new JobFailedEvent
             {
                 JobId = msg.JobId,
                 TenantId = msg.TenantId,
                 Error = result.Error!,
-                AttemptNum = msg.MaxAttempts,
-                IsFinal = isFinal
+                AttemptNum = failure.Attempt,
+                IsFinal = failure.IsFinal
             }, ct);
 
             // If not final, throw so MassTransit requeues for retry
             // MassTransit + configured retry policy handles the backoff
-            if (!isFinal)
+            if (!failure.IsFinal)
                 throw new JobExecutionException(result.Error!);
         }
     }
