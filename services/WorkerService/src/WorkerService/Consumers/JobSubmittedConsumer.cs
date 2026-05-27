@@ -16,12 +16,10 @@ public sealed class JobSubmittedConsumer(
     IJobStatusUpdater _statusUpdater,
     IPublishEndpoint _bus,
     IDatabase _redis,
+    IWorkerIdentity _identity,
     ILogger<JobSubmittedConsumer> _logger
 ) : IConsumer<JobSubmittedEvent>
 {
-    private readonly string _workerId =
-        Environment.MachineName + "-" + Guid.NewGuid().ToString("N")[..6];
-
     public async Task Consume(ConsumeContext<JobSubmittedEvent> ctx)
     {
         var msg = ctx.Message;
@@ -33,7 +31,7 @@ public sealed class JobSubmittedConsumer(
         // (throwing causes requeue which makes the problem worse)
         var idempotencyKey = $"job:processed:{msg.JobId}";
         var isFirstAttempt = await _redis.StringSetAsync(
-            idempotencyKey, _workerId,
+            idempotencyKey, _identity.WorkerId,
             TimeSpan.FromHours(24),
             When.NotExists);
  
@@ -56,7 +54,7 @@ public sealed class JobSubmittedConsumer(
         }
 
         // -- STEP 3: Claim job in database -----------------------------
-        await _statusUpdater.MarkRunningAsync(msg.JobId, _workerId, ct);
+        await _statusUpdater.MarkRunningAsync(msg.JobId, _identity.WorkerId, ct);
 
         ExecutionResult result;
         try

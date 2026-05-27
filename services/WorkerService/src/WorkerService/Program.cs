@@ -17,6 +17,8 @@ builder.Services.AddDbContext<JobsDbContext>(opts =>
         ?? throw new InvalidOperationException("Missing ConnectionStrings:Jobs")));
 
 builder.Services.AddScoped<IJobStatusUpdater, JobStatusUpdater>();
+builder.Services.AddSingleton<IWorkerIdentity, WorkerIdentity>();
+builder.Services.AddHostedService<HeartbeatService>();
 
 // Redis — single multiplexer shared across all consumers
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
