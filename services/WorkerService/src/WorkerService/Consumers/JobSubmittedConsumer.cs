@@ -32,12 +32,12 @@ public sealed class JobSubmittedConsumer(
         // (duplicate delivery from RabbitMQ), skip silently — do NOT throw
         // (throwing causes requeue which makes the problem worse)
         var idempotencyKey = $"job:processed:{msg.JobId}";
-        var alreadyDone = await _redis.StringSetAsync(
+        var isFirstAttempt = await _redis.StringSetAsync(
             idempotencyKey, _workerId,
             TimeSpan.FromHours(24),
             When.NotExists);
-
-        if (!alreadyDone)
+ 
+        if (!isFirstAttempt)
         {
             _logger.LogWarning("Duplicate delivery of job {JobId} — skipping", msg.JobId);
             return;
