@@ -1,11 +1,11 @@
-namespace WorkerService.Services;
-
 using JobEngine.Shared.Contracts.Events;
 using JobService.Domain.Entities;
 using JobService.Infrastructure.Persistence;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
+
+namespace WorkerService.Services;
 
 public sealed class HeartbeatService(
     ILogger<HeartbeatService> _log,
