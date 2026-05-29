@@ -4,11 +4,39 @@ using System.Text.Json;
 
 namespace NotificationService.Webhooks;
 
-public sealed class WebhookDeliveryService(
-    IHttpClientFactory _http,
-    IWebhookRepository _webhooks,
-    ILogger<WebhookDeliveryService> _logger)
+public sealed class WebhookDeliveryService
 {
+    private static readonly TimeSpan[] DefaultRetryDelays =
+        [TimeSpan.Zero, TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(5)];
+
+    private readonly IHttpClientFactory _http;
+    private readonly IWebhookRepository _webhooks;
+    private readonly ILogger<WebhookDeliveryService> _logger;
+    private readonly IReadOnlyList<TimeSpan> _retryDelays;
+    private readonly Func<long> _timestampProvider;
+
+    public WebhookDeliveryService(
+        IHttpClientFactory http,
+        IWebhookRepository webhooks,
+        ILogger<WebhookDeliveryService> logger)
+        : this(http, webhooks, logger, DefaultRetryDelays, static () => DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+    {
+    }
+
+    internal WebhookDeliveryService(
+        IHttpClientFactory http,
+        IWebhookRepository webhooks,
+        ILogger<WebhookDeliveryService> logger,
+        IReadOnlyList<TimeSpan> retryDelays,
+        Func<long> timestampProvider)
+    {
+        _http = http;
+        _webhooks = webhooks;
+        _logger = logger;
+        _retryDelays = retryDelays.Count == 0 ? DefaultRetryDelays : retryDelays;
+        _timestampProvider = timestampProvider;
+    }
+
     public async Task DeliverAsync(
         Guid tenantId, string eventType,
         object payload, CancellationToken ct)
@@ -36,9 +64,7 @@ public sealed class WebhookDeliveryService(
         var client = _http.CreateClient();
 
         // Retry up to 3 times: immediate, 30s, 5min
-        var delays = new[] { TimeSpan.Zero, TimeSpan.FromSeconds(30),
-                              TimeSpan.FromMinutes(5) };
-        foreach (var delay in delays)
+        foreach (var delay in _retryDelays)
         {
             if (delay > TimeSpan.Zero) await Task.Delay(delay, ct);
             try
@@ -51,7 +77,7 @@ public sealed class WebhookDeliveryService(
                 // Standard webhook headers
                 request.Headers.Add("X-JobEngine-Event", eventType);
                 request.Headers.Add("X-JobEngine-Signature", $"sha256={signature}");
-                request.Headers.Add("X-JobEngine-Timestamp", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString());
+                request.Headers.Add("X-JobEngine-Timestamp", _timestampProvider().ToString());
 
                 using var response = await client.SendAsync(request, ct);
                 if (response.IsSuccessStatusCode) return; // delivered!
