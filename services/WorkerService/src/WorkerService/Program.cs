@@ -20,10 +20,12 @@ builder.Services.AddScoped<IJobStatusUpdater, JobStatusUpdater>();
 builder.Services.AddSingleton<IWorkerIdentity, WorkerIdentity>();
 builder.Services.AddHostedService<HeartbeatService>();
 
+var redisConnection = GetRequiredSetting(builder.Configuration, "Redis:Connection");
+var executionServiceUrl = GetRequiredSetting(builder.Configuration, "ExecutionService:Url");
+
 // Redis — single multiplexer shared across all consumers
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-    ConnectionMultiplexer.Connect(
-        builder.Configuration["Redis__Connection"]!));
+    ConnectionMultiplexer.Connect(redisConnection));
 
 builder.Services.AddSingleton(sp =>
     sp.GetRequiredService<IConnectionMultiplexer>().GetDatabase());
@@ -38,9 +40,9 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((ctx, cfg) =>
     {
-        var rabbitHost = builder.Configuration["RabbitMQ__Host"] ?? "rabbitmq";
-        var rabbitUsername = builder.Configuration["RabbitMQ__Username"] ?? "guest";
-        var rabbitPassword = builder.Configuration["RabbitMQ__Password"] ?? "guest";
+        var rabbitHost = builder.Configuration["RabbitMQ:Host"] ?? "rabbitmq";
+        var rabbitUsername = builder.Configuration["RabbitMQ:Username"] ?? "guest";
+        var rabbitPassword = builder.Configuration["RabbitMQ:Password"] ?? "guest";
 
         cfg.Host(rabbitHost, h =>
         {
@@ -73,7 +75,13 @@ builder.Services.AddMassTransit(x =>
 // Distributed lock manager
 builder.Services.AddSingleton<IDistributedLockManager, RedisLockManager>();
 builder.Services.AddHttpClient<IExecutionServiceClient, ExecutionServiceClient>(c =>
-    c.BaseAddress = new Uri(builder.Configuration["ExecutionService__Url"]!));
+    c.BaseAddress = new Uri(executionServiceUrl));
 
 var app = builder.Build();
 await app.RunAsync();
+
+static string GetRequiredSetting(IConfiguration configuration, string key)
+{
+    return configuration[key]
+        ?? throw new InvalidOperationException($"Missing configuration value: {key}");
+}
