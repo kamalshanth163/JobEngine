@@ -119,6 +119,20 @@ pre {
   gap: 0.2rem;
 }
 
+.sidebar-brand-title,
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
 .brand-panel h1 {
   font-size: 1.7rem;
 }
@@ -270,6 +284,14 @@ pre {
   display: grid;
   gap: 0.8rem;
   padding: 1rem;
+}
+
+.auth-brand {
+  margin-bottom: 0.3rem;
+  width: max-content;
+  font-family: "Space Grotesk", "Sora", sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
 }
 
 .auth-hero h1 {

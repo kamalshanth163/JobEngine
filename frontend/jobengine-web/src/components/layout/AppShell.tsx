@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { logout } from "../../features/auth/authSlice";
 import { closeMobileMenu, toggleMobileMenu } from "../../features/ui/uiSlice";
+import logo from "../../assets/logo.png";
 
 const navLinks = [
   { to: "/dashboard", label: "Dashboard" },
@@ -30,7 +31,10 @@ export const AppShell = () => {
       <aside className={`sidebar ${mobileMenuOpen ? "sidebar-open" : ""}`}>
         <div className="brand-panel">
           <p className="eyebrow">Tenant Console</p>
-          <h1>JobEngine</h1>
+          <div className="sidebar-brand-title">
+            <img src={logo} alt="JobEngine logo" className="brand-logo" />
+            <h1>JobEngine</h1>
+          </div>
           <p className="tenant-chip">{auth.tenantSlug ?? "guest-tenant"}</p>
         </div>
 

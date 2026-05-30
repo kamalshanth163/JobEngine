@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { setCredentials } from "../features/auth/authSlice";
 import { pushActivity } from "../features/activity/activitySlice";
 import { useLoginMutation, useRegisterTenantMutation } from "../services/api";
+import logo from "../assets/logo.png";
 
 const defaultRegister = {
   tenantName: "",
@@ -102,6 +103,10 @@ export const AuthPage = () => {
   return (
     <section className="auth-page">
       <div className="auth-hero">
+        <div className="auth-brand">
+          <img src={logo} alt="JobEngine logo" className="brand-logo" />
+          <span>JobEngine</span>
+        </div>
         <p className="eyebrow">Multi-tenant orchestration</p>
         <h1>Control every job from one tenant cockpit.</h1>
         <p>
