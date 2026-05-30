@@ -369,12 +369,15 @@ pre {
 
 .auth-page {
   min-height: 100vh;
-  width: min(100% - 5rem, 1260px);
-  margin: 0 auto;
+  --grid-shift-x: 0px;
+  --grid-shift-y: 0px;
+  --grid-react-ms: 460ms;
+  width: 100%;
+  margin: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(380px, 470px);
   gap: 1.2rem;
-  padding: clamp(1.4rem, 3.2vw, 3rem);
+  padding: clamp(1.4rem, 3.2vw, 3rem) clamp(1.6rem, 5vw, 4.5rem);
   align-items: center;
   position: relative;
   isolation: isolate;
@@ -405,10 +408,12 @@ pre {
     radial-gradient(circle at 18% 36%, rgba(255, 255, 255, 0.26) 2px, transparent 2px),
     radial-gradient(circle at 58% 66%, rgba(255, 255, 255, 0.18) 2px, transparent 2px),
     radial-gradient(circle at 76% 30%, rgba(255, 255, 255, 0.24) 2px, transparent 2px);
-  background-size: 56px 56px, 56px 56px, 220px 220px, 280px 280px, 320px 320px;
+  background-size: 64px 64px, 64px 64px, 240px 240px, 304px 304px, 352px 352px;
   background-position: 0 0, 0 0, 0 0, 34px 64px, 66px 30px;
   opacity: 0.68;
-  animation: authGridFlow 18s linear infinite;
+  transform: translate3d(var(--grid-shift-x), var(--grid-shift-y), 0);
+  transition: transform var(--grid-react-ms) ease-out;
+  animation: authGridFlow 15.5s linear infinite;
 }
 
 .auth-processing {
@@ -421,34 +426,56 @@ pre {
 
 .job-particle {
   position: absolute;
-  width: 34px;
-  height: 34px;
+  width: var(--particle-size, 34px);
+  height: var(--particle-size, 34px);
   border-radius: 999px;
   background: radial-gradient(circle at 35% 35%, #f5f3ff 0%, #c4b5fd 48%, #7c3aed 100%);
-  box-shadow: 0 0 32px rgba(124, 58, 237, 0.62);
-  left: 4%;
+  box-shadow: 0 0 calc(var(--particle-size, 34px) * 0.95) rgba(124, 58, 237, 0.62);
+  left: var(--x-start, 4%);
   opacity: 0;
-  animation: jobParticleFlow 7.8s linear infinite;
+  filter: blur(var(--particle-blur, 0px));
+  animation: jobParticleFlow var(--duration, 7.8s) linear infinite;
+  will-change: left, transform, opacity;
 }
 
 .particle-a {
-  top: calc(28% - 16px);
+  --particle-size: 44px;
+  --duration: 9.6s;
+  --x-start: 1%;
+  --x-end: 92%;
+  --particle-blur: 0px;
+  top: calc(26% - 22px);
   animation-delay: 0s;
 }
 
 .particle-b {
-  top: calc(48% - 16px);
-  animation-delay: 1.6s;
+  --particle-size: 24px;
+  --duration: 7.1s;
+  --x-start: 8%;
+  --x-end: 96%;
+  --particle-blur: 1.1px;
+  top: calc(50% - 12px);
+  animation-delay: 1.2s;
 }
 
 .particle-c {
-  top: calc(68% - 16px);
-  animation-delay: 3.2s;
+  --particle-size: 56px;
+  --duration: 11.2s;
+  --x-start: -2%;
+  --x-end: 88%;
+  --particle-blur: 0.35px;
+  top: calc(72% - 28px);
+  animation-delay: 2.4s;
 }
 
 .particle-d {
-  top: calc(48% - 16px);
-  animation-delay: 4.8s;
+  --particle-size: 18px;
+  --duration: 6.4s;
+  --x-start: 14%;
+  --x-end: 98%;
+  --particle-blur: 1.6px;
+  top: calc(38% - 9px);
+  animation-delay: 3.8s;
 }
 
 :root[data-theme="dark"] .auth-page::before {
@@ -1058,31 +1085,54 @@ th {
 
 @keyframes authGridFlow {
   0% {
-    background-position: 0 0, 0 0, 0 0, 20px 40px, 40px 20px;
+    background-position: 0 0, 0 0, 0 0, 34px 64px, 66px 30px;
+  }
+  18% {
+    background-position: 24px -30px, -26px 20px, 18px -24px, 72px 32px, 44px 76px;
+  }
+  37% {
+    background-position: -40px 14px, 32px -22px, -16px 26px, 18px 92px, 88px 12px;
+  }
+  56% {
+    background-position: 28px 48px, -34px -38px, 22px 10px, 82px 58px, 34px 98px;
+  }
+  76% {
+    background-position: -22px -44px, 18px 36px, -20px -18px, 46px 20px, 104px 44px;
+  }
+  90% {
+    background-position: 38px 22px, -44px 8px, 28px -30px, 94px 74px, 52px 24px;
   }
   100% {
-    background-position: 36px 36px, -36px -36px, 12px -8px, 46px 66px, 60px 44px;
+    background-position: 0 0, 0 0, 0 0, 34px 64px, 66px 30px;
   }
 }
 
 @keyframes jobParticleFlow {
   0% {
-    left: 4%;
+    left: var(--x-start, 4%);
     opacity: 0;
-    transform: scale(0.75);
+    transform: translateY(0) scale(0.72);
   }
   10% {
+    opacity: 0.9;
+    transform: translateY(-3px) scale(0.96);
+  }
+  42% {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(3px) scale(1.06);
+  }
+  74% {
+    opacity: 0.92;
+    transform: translateY(-2px) scale(0.98);
   }
   90% {
-    opacity: 1;
-    transform: scale(1);
+    opacity: 0.7;
+    transform: translateY(2px) scale(0.9);
   }
   100% {
-    left: 95%;
+    left: var(--x-end, 95%);
     opacity: 0;
-    transform: scale(0.75);
+    transform: translateY(0) scale(0.68);
   }
 }
 

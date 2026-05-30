@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import { useMemo, useRef, useState } from "react";
+import type { FormEvent, MouseEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { setCredentials } from "../features/auth/authSlice";
@@ -21,6 +21,8 @@ const defaultLogin = {
 };
 
 export const AuthPage = () => {
+  const authPageRef = useRef<HTMLElement | null>(null);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const isAuthenticated = useAppSelector((state) => Boolean(state.auth.accessToken));
@@ -96,12 +98,59 @@ export const AuthPage = () => {
     navigate("/dashboard");
   };
 
+  const onAuthPageMouseMove = (event: MouseEvent<HTMLElement>) => {
+    const page = authPageRef.current;
+    if (!page) {
+      return;
+    }
+
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+
+    const rect = page.getBoundingClientRect();
+    const xRatio = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+    const yRatio = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+
+    page.style.setProperty("--grid-react-ms", "55ms");
+    page.style.setProperty("--grid-shift-x", `${xRatio * 22}px`);
+    page.style.setProperty("--grid-shift-y", `${yRatio * 18}px`);
+
+    idleTimerRef.current = setTimeout(() => {
+      page.style.setProperty("--grid-react-ms", "460ms");
+      page.style.setProperty("--grid-shift-x", "0px");
+      page.style.setProperty("--grid-shift-y", "0px");
+    }, 130);
+  };
+
+  const onAuthPageMouseLeave = () => {
+    const page = authPageRef.current;
+    if (!page) {
+      return;
+    }
+
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+
+    page.style.setProperty("--grid-react-ms", "460ms");
+    page.style.setProperty("--grid-shift-x", "0px");
+    page.style.setProperty("--grid-shift-y", "0px");
+  };
+
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 
   return (
-    <section className="auth-page">
+    <section
+      ref={authPageRef}
+      className="auth-page"
+      onMouseMove={onAuthPageMouseMove}
+      onMouseLeave={onAuthPageMouseLeave}
+    >
       <div className="auth-processing" aria-hidden="true">
         <span className="job-particle particle-a" />
         <span className="job-particle particle-b" />
