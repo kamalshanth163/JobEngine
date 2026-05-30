@@ -2,6 +2,22 @@ using Yarp.ReverseProxy;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendCors", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // YARP reads routes + clusters from appsettings.json ReverseProxy section
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
@@ -18,6 +34,8 @@ app.Use(async (ctx, next) =>
         ctx.Request.Headers["X-Correlation-Id"] = Guid.NewGuid().ToString("N");
     await next();
 });
+
+app.UseCors("FrontendCors");
 
 app.MapHealthChecks("/health");
 app.MapReverseProxy();
