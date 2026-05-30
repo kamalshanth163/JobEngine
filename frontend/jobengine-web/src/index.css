@@ -1,19 +1,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 :root {
-  --bg: #f5f0e5;
-  --ink: #1a1b21;
-  --ink-muted: #57545f;
-  --surface: rgba(255, 255, 255, 0.62);
-  --surface-strong: #fff7e8;
-  --line: rgba(45, 35, 24, 0.18);
-  --brand: #b42318;
-  --brand-alt: #005f73;
-  --success: #1d8348;
-  --warning: #b45f06;
-  --danger: #8e1c1c;
-  --pending: #7e4f2e;
-  --shadow: 0 18px 42px rgba(34, 26, 21, 0.15);
+  --bg: #fcfcff;
+  --ink: #1f1b2e;
+  --ink-muted: #6f6a84;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-strong: rgba(255, 255, 255, 0.9);
+  --line: rgba(120, 108, 170, 0.16);
+  --brand: #6a57ff;
+  --brand-alt: #7d67ff;
+  --success: #1f8f63;
+  --warning: #b2702c;
+  --danger: #b02967;
+  --pending: #8f6ab8;
+  --shadow: 0 18px 46px rgba(92, 80, 145, 0.12);
   --radius: 18px;
   --radius-sm: 12px;
 }
@@ -33,9 +33,10 @@ body {
   font-family: "Sora", "Segoe UI", sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(circle at 14% 10%, rgba(180, 95, 6, 0.2), transparent 28%),
-    radial-gradient(circle at 92% 18%, rgba(0, 95, 115, 0.2), transparent 34%),
-    linear-gradient(145deg, #fff8ea 0%, #f3ead7 46%, #efe4d6 100%);
+    radial-gradient(circle at 12% 8%, rgba(170, 151, 255, 0.15), transparent 30%),
+    radial-gradient(circle at 90% 16%, rgba(228, 216, 255, 0.22), transparent 38%),
+    radial-gradient(circle at 34% 84%, rgba(184, 220, 255, 0.14), transparent 34%),
+    linear-gradient(160deg, #ffffff 0%, #fbfaff 46%, #f6f3ff 100%);
   line-height: 1.5;
 }
 
@@ -51,7 +52,7 @@ body::after {
 body::before {
   width: 300px;
   height: 300px;
-  background: rgba(180, 35, 24, 0.15);
+  background: rgba(133, 110, 255, 0.12);
   top: -90px;
   right: -70px;
 }
@@ -59,7 +60,7 @@ body::before {
 body::after {
   width: 240px;
   height: 240px;
-  background: rgba(0, 95, 115, 0.15);
+  background: rgba(198, 165, 255, 0.13);
   left: -80px;
   bottom: -90px;
 }
@@ -107,7 +108,8 @@ pre {
 
 .sidebar {
   border-right: 1px solid var(--line);
-  background: rgba(248, 238, 222, 0.82);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(249, 246, 255, 0.78));
   padding: 1.2rem;
   display: flex;
   flex-direction: column;
@@ -139,7 +141,7 @@ pre {
 
 .tenant-chip {
   width: max-content;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0.2rem 0.65rem;
@@ -159,14 +161,14 @@ pre {
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.7);
   color: var(--ink);
 }
 
 .nav-link-active {
-  background: linear-gradient(140deg, rgba(180, 35, 24, 0.16), rgba(0, 95, 115, 0.16));
+  background: linear-gradient(140deg, rgba(124, 103, 255, 0.16), rgba(203, 176, 255, 0.14));
   color: var(--ink);
-  border: 1px solid rgba(180, 35, 24, 0.25);
+  border: 1px solid rgba(124, 103, 255, 0.24);
 }
 
 .content-column {
@@ -180,7 +182,8 @@ pre {
   top: 0;
   z-index: 6;
   border-bottom: 1px solid var(--line);
-  background: rgba(255, 251, 242, 0.85);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(249, 246, 255, 0.84));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -198,7 +201,8 @@ pre {
 
 .activity-panel {
   border-left: 1px solid var(--line);
-  background: rgba(251, 245, 234, 0.84);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 244, 255, 0.78));
   padding: 1.1rem;
   display: grid;
   align-content: start;
@@ -215,7 +219,7 @@ pre {
 
 .activity-item {
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.82);
   border-radius: var(--radius-sm);
   padding: 0.72rem;
   display: grid;
@@ -240,18 +244,29 @@ pre {
 }
 
 .card {
+  position: relative;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
+  backdrop-filter: blur(16px) saturate(122%);
   padding: 1rem;
   animation: riseIn 300ms ease;
 }
 
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.5), transparent 38%);
+  pointer-events: none;
+}
+
 .gradient-card {
   background:
-    linear-gradient(120deg, rgba(180, 35, 24, 0.14), rgba(0, 95, 115, 0.16)),
-    rgba(255, 249, 237, 0.86);
+    linear-gradient(120deg, rgba(123, 88, 255, 0.12), rgba(201, 130, 255, 0.1)),
+    rgba(255, 255, 255, 0.78);
 }
 
 .hero {
@@ -320,8 +335,8 @@ pre {
 }
 
 .tab.active {
-  border-color: rgba(180, 35, 24, 0.4);
-  background: rgba(180, 35, 24, 0.12);
+  border-color: rgba(123, 88, 255, 0.35);
+  background: rgba(123, 88, 255, 0.1);
 }
 
 .form-grid {
@@ -374,20 +389,20 @@ textarea {
 }
 
 .btn.primary {
-  background: linear-gradient(130deg, var(--brand), #a32279);
+  background: linear-gradient(130deg, var(--brand), #b05bff);
   color: #fff;
 }
 
 .btn.secondary,
 .ghost,
 .menu-button {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.97);
   color: var(--ink);
   border-color: var(--line);
 }
 
 .ghost.danger {
-  border-color: rgba(142, 28, 28, 0.3);
+  border-color: rgba(176, 41, 103, 0.32);
   color: var(--danger);
 }
 
@@ -477,7 +492,7 @@ th {
 .meta-grid div {
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.77);
+  background: rgba(255, 255, 255, 0.9);
   padding: 0.68rem;
   display: grid;
 }
@@ -513,24 +528,24 @@ th {
 
 .status-pending,
 .status-queued {
-  color: #523621;
-  background: rgba(126, 79, 46, 0.22);
+  color: #53307d;
+  background: rgba(143, 106, 184, 0.2);
 }
 
 .status-running {
-  color: #0b4a5a;
-  background: rgba(0, 95, 115, 0.2);
+  color: #4b2f9f;
+  background: rgba(111, 78, 235, 0.2);
 }
 
 .status-completed {
-  color: #14532d;
-  background: rgba(29, 131, 72, 0.22);
+  color: #116145;
+  background: rgba(31, 143, 99, 0.2);
 }
 
 .status-failed,
 .status-deadletter {
-  color: #6f1111;
-  background: rgba(142, 28, 28, 0.22);
+  color: #8a1f53;
+  background: rgba(176, 41, 103, 0.2);
 }
 
 .text-link {
