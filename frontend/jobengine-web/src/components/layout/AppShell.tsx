@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { logout } from "../../features/auth/authSlice";
 import { closeMobileMenu, toggleMobileMenu } from "../../features/ui/uiSlice";
 import logo from "../../assets/logo.png";
+
+const THEME_STORAGE_KEY = "jobengine.theme";
 
 const navLinks = [
   { to: "/dashboard", label: "Dashboard" },
@@ -19,6 +22,23 @@ export const AppShell = () => {
   const mobileMenuOpen = useAppSelector((state) => state.ui.mobileMenuOpen);
   const activity = useAppSelector((state) => state.activity.events);
   const auth = useAppSelector((state) => state.auth);
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window === "undefined") {
+      return "light";
+    }
+
+    const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (savedTheme === "light" || savedTheme === "dark") {
+      return savedTheme;
+    }
+
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -53,9 +73,19 @@ export const AppShell = () => {
           ))}
         </nav>
 
-        <button className="ghost danger" type="button" onClick={handleLogout}>
-          Log out
-        </button>
+        <div className="sidebar-footer">
+          <button
+            className="ghost theme-toggle"
+            type="button"
+            onClick={() => setTheme((prev) => (prev === "light" ? "dark" : "light"))}
+          >
+            {theme === "light" ? "Switch to Dark" : "Switch to Light"}
+          </button>
+
+          <button className="ghost danger" type="button" onClick={handleLogout}>
+            Log out
+          </button>
+        </div>
       </aside>
 
       <div className="content-column">

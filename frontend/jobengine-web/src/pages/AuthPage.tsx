@@ -102,16 +102,24 @@ export const AuthPage = () => {
 
   return (
     <section className="auth-page">
+      <div className="auth-processing" aria-hidden="true">
+        <span className="job-particle particle-a" />
+        <span className="job-particle particle-b" />
+        <span className="job-particle particle-c" />
+        <span className="job-particle particle-d" />
+      </div>
+
       <div className="auth-hero">
         <div className="auth-brand">
           <img src={logo} alt="JobEngine logo" className="brand-logo" />
           <span>JobEngine</span>
         </div>
-        <p className="eyebrow">Multi-tenant orchestration</p>
-        <h1>Control every job from one tenant cockpit.</h1>
+        <p className="eyebrow">Distributed Job Platform</p>
+        <h1>Run every background workload from one modern operations hub.</h1>
         <p>
-          Register a tenant admin, sign in, submit jobs, inspect execution lifecycle,
-          and generate API keys for secure integration.
+          Launch jobs across distributed workers, monitor throughput in real time,
+          and resolve retries before they become incidents, all with secure
+          tenant-level access and API-first automation.
         </p>
       </div>
 

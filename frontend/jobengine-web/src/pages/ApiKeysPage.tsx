@@ -62,15 +62,20 @@ export const ApiKeysPage = () => {
 
       <section className="card stack-sm">
         <h4>Tenant Context</h4>
-        <p>
-          <strong>Name:</strong> {tenant?.name ?? "Loading..."}
-        </p>
-        <p>
-          <strong>Slug:</strong> {tenant?.slug ?? "Loading..."}
-        </p>
-        <p>
-          <strong>Tenant Id:</strong> {tenantId}
-        </p>
+        <div className="info-grid">
+          <article className="info-item">
+            <span className="info-label">Name</span>
+            <p className="info-value">{tenant?.name ?? "Loading..."}</p>
+          </article>
+          <article className="info-item">
+            <span className="info-label">Slug</span>
+            <p className="info-value">{tenant?.slug ?? "Loading..."}</p>
+          </article>
+          <article className="info-item">
+            <span className="info-label">Tenant Id</span>
+            <p className="info-value">{tenantId}</p>
+          </article>
+        </div>
       </section>
 
       <form className="card form-grid" onSubmit={handleCreateKey}>
