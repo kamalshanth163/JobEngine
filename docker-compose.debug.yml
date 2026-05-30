@@ -17,7 +17,7 @@ services:
     volumes:
       - ./:/src
     command:
-      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project gateway/ApiGateway/ApiGateway.csproj --no-launch-profile --urls http://0.0.0.0:8080
+      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project backend/gateway/ApiGateway/ApiGateway.csproj --no-launch-profile --urls http://0.0.0.0:8080
 
   auth-service:
     build: null
@@ -39,7 +39,7 @@ services:
     volumes:
       - ./:/src
     command:
-      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project services/AuthService/src/AuthService.Api/AuthService.Api.csproj --no-launch-profile --urls http://0.0.0.0:8080
+      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project backend/services/AuthService/src/AuthService.Api/AuthService.Api.csproj --no-launch-profile --urls http://0.0.0.0:8080
 
   job-service:
     build: null
@@ -65,7 +65,7 @@ services:
     volumes:
       - ./:/src
     command:
-      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project services/JobService/src/JobService.Api/JobService.Api.csproj --no-launch-profile --urls http://0.0.0.0:8080
+      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project backend/services/JobService/src/JobService.Api/JobService.Api.csproj --no-launch-profile --urls http://0.0.0.0:8080
 
   execution-service:
     build: null
@@ -82,7 +82,7 @@ services:
     volumes:
       - ./:/src
     command:
-      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project services/ExecutionService/src/ExecutionService.Api/ExecutionService.Api.csproj --no-launch-profile --urls http://0.0.0.0:8080
+      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project backend/services/ExecutionService/src/ExecutionService.Api/ExecutionService.Api.csproj --no-launch-profile --urls http://0.0.0.0:8080
 
   worker-service:
     build: null
@@ -104,7 +104,7 @@ services:
     volumes:
       - ./:/src
     command:
-      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project services/WorkerService/src/WorkerService/WorkerService.csproj --no-launch-profile
+      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project backend/services/WorkerService/src/WorkerService/WorkerService.csproj --no-launch-profile
 
   notification-service:
     build: null
@@ -122,4 +122,4 @@ services:
     volumes:
       - ./:/src
     command:
-      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project services/NotificationService/src/NotificationService/NotificationService.csproj --no-launch-profile
+      - if [ ! -x /vsdbg/vsdbg ]; then mkdir -p /vsdbg && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg; fi; dotnet run --project backend/services/NotificationService/src/NotificationService/NotificationService.csproj --no-launch-profile

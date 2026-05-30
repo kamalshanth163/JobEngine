@@ -13,7 +13,7 @@ COPY services/AuthService/src/AuthService.Api/AuthService.Api.csproj services/Au
 RUN dotnet restore services/AuthService/src/AuthService.Api/AuthService.Api.csproj
 COPY . .
 RUN dotnet publish services/AuthService/src/AuthService.Api/AuthService.Api.csproj \
-  -c Release -o /app/publish --no-restore
+  -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app

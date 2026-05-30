@@ -279,7 +279,7 @@ Purpose: consumes `JobCompletedEvent` / `JobFailedEvent` and sends HMAC-signed w
 
 ### Step A: Configure test webhook endpoint
 
-In `services/NotificationService/src/NotificationService/appsettings.Development.json`, add a `Webhooks` section.
+In `backend/services/NotificationService/src/NotificationService/appsettings.Development.json`, add a `Webhooks` section.
 
 Example:
 
@@ -357,20 +357,20 @@ If all pass, your full JobEngine flow is healthy.
 From repo root, compile each service:
 
 ```bash
-dotnet build gateway/ApiGateway/ApiGateway.csproj
-dotnet build services/AuthService/src/AuthService.Api/AuthService.Api.csproj
-dotnet build services/JobService/src/JobService.Api/JobService.Api.csproj
-dotnet build services/WorkerService/src/WorkerService/WorkerService.csproj
-dotnet build services/ExecutionService/src/ExecutionService.Api/ExecutionService.Api.csproj
-dotnet build services/NotificationService/src/NotificationService/NotificationService.csproj
+dotnet build backend/gateway/ApiGateway/ApiGateway.csproj
+dotnet build backend/services/AuthService/src/AuthService.Api/AuthService.Api.csproj
+dotnet build backend/services/JobService/src/JobService.Api/JobService.Api.csproj
+dotnet build backend/services/WorkerService/src/WorkerService/WorkerService.csproj
+dotnet build backend/services/ExecutionService/src/ExecutionService.Api/ExecutionService.Api.csproj
+dotnet build backend/services/NotificationService/src/NotificationService/NotificationService.csproj
 ```
 
 Run tests currently present:
 
 ```bash
-dotnet test tests/AuthService.Tests/AuthService.Tests.csproj
-dotnet test tests/JobService.Tests/JobService.Tests.csproj
-dotnet test tests/Integration.Tests/Integration.Tests.csproj
+dotnet test backend/tests/AuthService.Tests/AuthService.Tests.csproj
+dotnet test backend/tests/JobService.Tests/JobService.Tests.csproj
+dotnet test backend/tests/Integration.Tests/Integration.Tests.csproj
 ```
 
 ## 8) Troubleshooting quick guide

@@ -23,9 +23,9 @@ flowchart LR
 ## 2) Shared Contracts (The Message Schema Everyone Uses)
 
 Primary file:
-- shared/Contracts/Events/JobSubmittedEvent.cs
-- shared/Contracts/Events/JobCompletedEvent.cs
-- shared/Contracts/Events/JobFailedEvent.cs
+- backend/shared/Contracts/Events/JobSubmittedEvent.cs
+- backend/shared/Contracts/Events/JobCompletedEvent.cs
+- backend/shared/Contracts/Events/JobFailedEvent.cs
 
 These files define:
 - JobSubmittedEvent
@@ -55,8 +55,8 @@ public sealed record JobSubmittedEvent
 ## 3) Where the Downstream Flow Starts (JobService Publish)
 
 Key files:
-- services/JobService/src/JobService.Application/Commands/SubmitJobCommand.cs
-- services/JobService/src/JobService.Infrastructure/Messaging/MassTransitEventPublisher.cs
+- backend/services/JobService/src/JobService.Application/Commands/SubmitJobCommand.cs
+- backend/services/JobService/src/JobService.Infrastructure/Messaging/MassTransitEventPublisher.cs
 
 Important sequence in SubmitJobHandler:
 1. Enforce tenant quota.
@@ -73,7 +73,7 @@ Logical takeaway:
 ### 4.1 Startup and Wiring
 
 Main startup file:
-- services/WorkerService/src/WorkerService/Program.cs
+- backend/services/WorkerService/src/WorkerService/Program.cs
 
 What it configures:
 - JobsDbContext (PostgreSQL je_jobs connection)
@@ -92,7 +92,7 @@ MassTransit behavior configured in Program.cs:
 ### 4.2 Core Consumer Logic
 
 Core file:
-- services/WorkerService/src/WorkerService/Consumers/JobSubmittedConsumer.cs
+- backend/services/WorkerService/src/WorkerService/Consumers/JobSubmittedConsumer.cs
 
 This is the most important part. It does five major steps:
 
@@ -125,7 +125,7 @@ This is the most important part. It does five major steps:
 ### 4.3 Locking Details
 
 File:
-- services/WorkerService/src/WorkerService/Locking/RedisLockManager.cs
+- backend/services/WorkerService/src/WorkerService/Locking/RedisLockManager.cs
 
 Important details:
 - Lock acquisition uses single atomic Redis SET NX with TTL.
@@ -137,7 +137,7 @@ This ownership check avoids deleting another worker's lock after expiration/reac
 ### 4.4 Execution Client
 
 File:
-- services/WorkerService/src/WorkerService/Clients/ExecutionServiceClient.cs
+- backend/services/WorkerService/src/WorkerService/Clients/ExecutionServiceClient.cs
 
 Behavior:
 - Sends HTTP POST /api/v1/execute to ExecutionService.
@@ -147,7 +147,7 @@ Behavior:
 ### 4.5 Job Status Writer
 
 File:
-- services/WorkerService/src/WorkerService/Services/JobStatusUpdater.cs
+- backend/services/WorkerService/src/WorkerService/Services/JobStatusUpdater.cs
 
 Behavior:
 - Marks Running, Completed, Failed directly in JobsDbContext.
@@ -156,7 +156,7 @@ Behavior:
 ### 4.6 Tenant Context in Worker
 
 File:
-- services/WorkerService/src/WorkerService/Services/WorkerTenantContext.cs
+- backend/services/WorkerService/src/WorkerService/Services/WorkerTenantContext.cs
 
 Behavior:
 - Worker provides a non-user tenant context (Guid.Empty / "worker") for internal operations.
@@ -164,8 +164,8 @@ Behavior:
 ### 4.7 About Worker.cs and HeartbeatService
 
 Files:
-- services/WorkerService/src/WorkerService/Worker.cs
-- services/WorkerService/src/WorkerService/Services/HeartbeatService.cs
+- backend/services/WorkerService/src/WorkerService/Worker.cs
+- backend/services/WorkerService/src/WorkerService/Services/HeartbeatService.cs
 
 Current state:
 - Worker.cs is a template-style background loop.
@@ -177,7 +177,7 @@ Current state:
 ### 5.1 Startup and DI
 
 File:
-- services/ExecutionService/src/ExecutionService.Api/Program.cs
+- backend/services/ExecutionService/src/ExecutionService.Api/Program.cs
 
 Registers:
 - Controllers
@@ -191,7 +191,7 @@ Registers:
 ### 5.2 API Entry Point
 
 File:
-- services/ExecutionService/src/ExecutionService.Api/Controllers/ExecutionController.cs
+- backend/services/ExecutionService/src/ExecutionService.Api/Controllers/ExecutionController.cs
 
 Endpoint:
 - POST /api/v1/execute
@@ -205,7 +205,7 @@ Behavior:
 ### 5.3 Handler Routing and Timeout
 
 File:
-- services/ExecutionService/src/ExecutionService.Core/Handlers/JobHandlerRegistry.cs
+- backend/services/ExecutionService/src/ExecutionService.Core/Handlers/JobHandlerRegistry.cs
 
 Key logic:
 - Resolves handler dictionary by JobType (case-insensitive).
@@ -216,9 +216,9 @@ Key logic:
 ### 5.4 Concrete Handlers
 
 Files:
-- services/ExecutionService/src/ExecutionService.Core/Handlers/SendEmailHandler.cs
-- services/ExecutionService/src/ExecutionService.Core/Handlers/GenerateReportHandler.cs
-- services/ExecutionService/src/ExecutionService.Core/Handlers/DataSyncHandler.cs
+- backend/services/ExecutionService/src/ExecutionService.Core/Handlers/SendEmailHandler.cs
+- backend/services/ExecutionService/src/ExecutionService.Core/Handlers/GenerateReportHandler.cs
+- backend/services/ExecutionService/src/ExecutionService.Core/Handlers/DataSyncHandler.cs
 
 Current implementation:
 - Each deserializes payload JSON into typed record.
@@ -227,14 +227,14 @@ Current implementation:
 - Returns output string.
 
 Execution result model:
-- services/ExecutionService/src/ExecutionService.Core/Models/ExecutionResult.cs
+- backend/services/ExecutionService/src/ExecutionService.Core/Models/ExecutionResult.cs
 
 ## 6) NotificationService Deep Dive
 
 ### 6.1 Startup and Wiring
 
 File:
-- services/NotificationService/src/NotificationService/Program.cs
+- backend/services/NotificationService/src/NotificationService/Program.cs
 
 Registers:
 - MassTransit consumers for completed/failed events
@@ -246,7 +246,7 @@ Registers:
 ### 6.2 Event Consumers
 
 File:
-- services/NotificationService/src/NotificationService/Consumers/JobCompletedConsumer.cs
+- backend/services/NotificationService/src/NotificationService/Consumers/JobCompletedConsumer.cs
 
 Contains two consumers:
 - JobCompletedConsumer
@@ -262,9 +262,9 @@ Why IsFinal check exists:
 ### 6.3 Webhook Endpoint Repository
 
 Files:
-- services/NotificationService/src/NotificationService/Webhooks/IWebhookRepository.cs
-- services/NotificationService/src/NotificationService/Webhooks/ConfigurationWebhookRepository.cs
-- services/NotificationService/src/NotificationService/Webhooks/WebhookOptions.cs
+- backend/services/NotificationService/src/NotificationService/Webhooks/IWebhookRepository.cs
+- backend/services/NotificationService/src/NotificationService/Webhooks/ConfigurationWebhookRepository.cs
+- backend/services/NotificationService/src/NotificationService/Webhooks/WebhookOptions.cs
 
 Behavior:
 - Reads endpoints from configuration.
@@ -277,7 +277,7 @@ Behavior:
 ### 6.4 Webhook Delivery and Security
 
 File:
-- services/NotificationService/src/NotificationService/WebhookDeliveryService.cs
+- backend/services/NotificationService/src/NotificationService/WebhookDeliveryService.cs
 
 Delivery algorithm:
 1. Serialize payload JSON.

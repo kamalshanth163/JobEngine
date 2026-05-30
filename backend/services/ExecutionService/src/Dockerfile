@@ -8,7 +8,7 @@ COPY services/ExecutionService/src/ExecutionService.Api/ExecutionService.Api.csp
 RUN dotnet restore services/ExecutionService/src/ExecutionService.Api/ExecutionService.Api.csproj
 COPY . .
 RUN dotnet publish services/ExecutionService/src/ExecutionService.Api/ExecutionService.Api.csproj \
-  -c Release -o /app/publish --no-restore
+  -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app

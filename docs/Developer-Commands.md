@@ -124,77 +124,77 @@ Check jobs table rows:
 
 Restore solution (slnx):
 
-    dotnet restore JobEngine.slnx
+    dotnet restore backend/JobEngine.slnx
 
 Build all projects from slnx:
 
-    dotnet build JobEngine.slnx
+    dotnet build backend/JobEngine.slnx
 
 Build classic sln (editor fallback):
 
-    dotnet build JobEngine.sln
+    dotnet build backend/JobEngine.sln
 
 Build one project:
 
-    dotnet build services/JobService/src/JobService.Api/JobService.Api.csproj
+    dotnet build backend/services/JobService/src/JobService.Api/JobService.Api.csproj
 
 Clean one project:
 
-    dotnet clean services/JobService/src/JobService.Api/JobService.Api.csproj
+    dotnet clean backend/services/JobService/src/JobService.Api/JobService.Api.csproj
 
 ### 2.2 Run services locally (outside Docker)
 
 Run gateway:
 
-    dotnet run --project gateway/ApiGateway/ApiGateway.csproj
+    dotnet run --project backend/gateway/ApiGateway/ApiGateway.csproj
 
 Run auth service:
 
-    dotnet run --project services/AuthService/src/AuthService.Api/AuthService.Api.csproj
+    dotnet run --project backend/services/AuthService/src/AuthService.Api/AuthService.Api.csproj
 
 Run job service:
 
-    dotnet run --project services/JobService/src/JobService.Api/JobService.Api.csproj
+    dotnet run --project backend/services/JobService/src/JobService.Api/JobService.Api.csproj
 
 Run execution service:
 
-    dotnet run --project services/ExecutionService/src/ExecutionService.Api/ExecutionService.Api.csproj
+    dotnet run --project backend/services/ExecutionService/src/ExecutionService.Api/ExecutionService.Api.csproj
 
 Run worker service:
 
-    dotnet run --project services/WorkerService/src/WorkerService/WorkerService.csproj
+    dotnet run --project backend/services/WorkerService/src/WorkerService/WorkerService.csproj
 
 Run notification service:
 
-    dotnet run --project services/NotificationService/src/NotificationService/NotificationService.csproj
+    dotnet run --project backend/services/NotificationService/src/NotificationService/NotificationService.csproj
 
 ### 2.3 Tests
 
 Run all tests:
 
-    dotnet test JobEngine.slnx
+    dotnet test backend/JobEngine.slnx
 
 Run one test project:
 
-    dotnet test tests/JobService.Tests/JobService.Tests.csproj
+    dotnet test backend/tests/JobService.Tests/JobService.Tests.csproj
 
 Run one named test:
 
-    dotnet test tests/JobService.Tests/JobService.Tests.csproj --filter "FullyQualifiedName~TestName"
+    dotnet test backend/tests/JobService.Tests/JobService.Tests.csproj --filter "FullyQualifiedName~TestName"
 
 ### 2.4 NuGet package operations
 
 Add package to project:
 
-    dotnet add services/JobService/src/JobService.Api/JobService.Api.csproj package Microsoft.AspNetCore.Authentication.JwtBearer --version 10.0.5
+    dotnet add backend/services/JobService/src/JobService.Api/JobService.Api.csproj package Microsoft.AspNetCore.Authentication.JwtBearer --version 10.0.5
 
 Remove package:
 
-    dotnet remove services/JobService/src/JobService.Api/JobService.Api.csproj package Microsoft.AspNetCore.Authentication.JwtBearer
+    dotnet remove backend/services/JobService/src/JobService.Api/JobService.Api.csproj package Microsoft.AspNetCore.Authentication.JwtBearer
 
 List project packages:
 
-    dotnet list services/JobService/src/JobService.Api/JobService.Api.csproj package
+    dotnet list backend/services/JobService/src/JobService.Api/JobService.Api.csproj package
 
 ## 3) EF Core commands
 
@@ -213,69 +213,69 @@ Use EF command through local tool:
 Add migration:
 
     dotnet dotnet-ef migrations add <MigrationName> \
-      --project services/AuthService/src/AuthService.Infrastructure/AuthService.Infrastructure.csproj \
-      --startup-project services/AuthService/src/AuthService.Api/AuthService.Api.csproj \
+      --project backend/services/AuthService/src/AuthService.Infrastructure/AuthService.Infrastructure.csproj \
+      --startup-project backend/services/AuthService/src/AuthService.Api/AuthService.Api.csproj \
       --output-dir Migrations
 
 Update database:
 
     dotnet dotnet-ef database update \
-      --project services/AuthService/src/AuthService.Infrastructure/AuthService.Infrastructure.csproj \
-      --startup-project services/AuthService/src/AuthService.Api/AuthService.Api.csproj
+      --project backend/services/AuthService/src/AuthService.Infrastructure/AuthService.Infrastructure.csproj \
+      --startup-project backend/services/AuthService/src/AuthService.Api/AuthService.Api.csproj
 
 List migrations:
 
     dotnet dotnet-ef migrations list \
-      --project services/AuthService/src/AuthService.Infrastructure/AuthService.Infrastructure.csproj \
-      --startup-project services/AuthService/src/AuthService.Api/AuthService.Api.csproj
+      --project backend/services/AuthService/src/AuthService.Infrastructure/AuthService.Infrastructure.csproj \
+      --startup-project backend/services/AuthService/src/AuthService.Api/AuthService.Api.csproj
 
 Remove last migration (if not applied):
 
     dotnet dotnet-ef migrations remove \
-      --project services/AuthService/src/AuthService.Infrastructure/AuthService.Infrastructure.csproj \
-      --startup-project services/AuthService/src/AuthService.Api/AuthService.Api.csproj
+      --project backend/services/AuthService/src/AuthService.Infrastructure/AuthService.Infrastructure.csproj \
+      --startup-project backend/services/AuthService/src/AuthService.Api/AuthService.Api.csproj
 
 ### 3.2 JobService migrations
 
 Add migration:
 
     dotnet dotnet-ef migrations add <MigrationName> \
-      --project services/JobService/src/JobService.Infrastructure/JobService.Infrastructure.csproj \
-      --startup-project services/JobService/src/JobService.Api/JobService.Api.csproj \
+      --project backend/services/JobService/src/JobService.Infrastructure/JobService.Infrastructure.csproj \
+      --startup-project backend/services/JobService/src/JobService.Api/JobService.Api.csproj \
       --output-dir Persistence/Migrations
 
 Update database:
 
     dotnet dotnet-ef database update \
-      --project services/JobService/src/JobService.Infrastructure/JobService.Infrastructure.csproj \
-      --startup-project services/JobService/src/JobService.Api/JobService.Api.csproj
+      --project backend/services/JobService/src/JobService.Infrastructure/JobService.Infrastructure.csproj \
+      --startup-project backend/services/JobService/src/JobService.Api/JobService.Api.csproj
 
 List migrations:
 
     dotnet dotnet-ef migrations list \
-      --project services/JobService/src/JobService.Infrastructure/JobService.Infrastructure.csproj \
-      --startup-project services/JobService/src/JobService.Api/JobService.Api.csproj
+      --project backend/services/JobService/src/JobService.Infrastructure/JobService.Infrastructure.csproj \
+      --startup-project backend/services/JobService/src/JobService.Api/JobService.Api.csproj
 
 Remove last migration (if not applied):
 
     dotnet dotnet-ef migrations remove \
-      --project services/JobService/src/JobService.Infrastructure/JobService.Infrastructure.csproj \
-      --startup-project services/JobService/src/JobService.Api/JobService.Api.csproj
+      --project backend/services/JobService/src/JobService.Infrastructure/JobService.Infrastructure.csproj \
+      --startup-project backend/services/JobService/src/JobService.Api/JobService.Api.csproj
 
 ### 3.3 Generate SQL scripts
 
 Generate idempotent script for AuthService:
 
     dotnet dotnet-ef migrations script --idempotent \
-      --project services/AuthService/src/AuthService.Infrastructure/AuthService.Infrastructure.csproj \
-      --startup-project services/AuthService/src/AuthService.Api/AuthService.Api.csproj \
+      --project backend/services/AuthService/src/AuthService.Infrastructure/AuthService.Infrastructure.csproj \
+      --startup-project backend/services/AuthService/src/AuthService.Api/AuthService.Api.csproj \
       --output auth-migrations.sql
 
 Generate idempotent script for JobService:
 
     dotnet dotnet-ef migrations script --idempotent \
-      --project services/JobService/src/JobService.Infrastructure/JobService.Infrastructure.csproj \
-      --startup-project services/JobService/src/JobService.Api/JobService.Api.csproj \
+      --project backend/services/JobService/src/JobService.Infrastructure/JobService.Infrastructure.csproj \
+      --startup-project backend/services/JobService/src/JobService.Api/JobService.Api.csproj \
       --output jobs-migrations.sql
 
 ## 4) Common workflow recipes
@@ -284,7 +284,7 @@ Generate idempotent script for JobService:
 
 1. Build target service:
 
-    dotnet build services/ExecutionService/src/ExecutionService.Api/ExecutionService.Api.csproj
+    dotnet build backend/services/ExecutionService/src/ExecutionService.Api/ExecutionService.Api.csproj
 
 2. If running with Docker debug profile, restart only that service:
 
@@ -301,8 +301,8 @@ Generate idempotent script for JobService:
 3. Update database.
 4. Build and run tests:
 
-    dotnet build JobEngine.slnx
-    dotnet test JobEngine.slnx
+    dotnet build backend/JobEngine.slnx
+    dotnet test backend/JobEngine.slnx
 
 ### 4.3 Reset local Docker state (use carefully)
 

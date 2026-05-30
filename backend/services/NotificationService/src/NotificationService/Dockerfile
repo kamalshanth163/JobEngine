@@ -7,7 +7,7 @@ COPY services/NotificationService/src/NotificationService/NotificationService.cs
 RUN dotnet restore services/NotificationService/src/NotificationService/NotificationService.csproj
 COPY . .
 RUN dotnet publish services/NotificationService/src/NotificationService/NotificationService.csproj \
-  -c Release -o /app/publish --no-restore
+  -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/runtime:10.0 AS runtime
 WORKDIR /app

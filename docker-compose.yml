@@ -6,7 +6,7 @@ services:
   # -- API Gateway (YARP reverse proxy) ------------------
   gateway:
     build:
-      context: .
+      context: ./backend
       dockerfile: gateway/ApiGateway/Dockerfile
     ports: ["8080:8080"]
     environment:
@@ -17,7 +17,7 @@ services:
   # -- Auth Service --------------------------------------
   auth-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: services/AuthService/src/Dockerfile
     ports: ["8082:8080"]
     environment:
@@ -32,7 +32,7 @@ services:
   # -- Job Service ---------------------------------------
   job-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: services/JobService/src/Dockerfile
     ports: ["8081:8080"]
     environment:
@@ -51,7 +51,7 @@ services:
   # -- Worker Service (3 replicas = 3 competing workers) -
   worker-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: services/WorkerService/src/WorkerService/Dockerfile
     deploy:
       replicas: 3
@@ -66,7 +66,7 @@ services:
   # -- Execution Service ---------------------------------
   execution-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: services/ExecutionService/src/Dockerfile
     ports: ["8084:8080"]
     networks: [jobengine]
@@ -74,7 +74,7 @@ services:
   # -- Notification Service ------------------------------
   notification-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: services/NotificationService/src/NotificationService/Dockerfile
     environment:
       - RabbitMQ__Host=rabbitmq

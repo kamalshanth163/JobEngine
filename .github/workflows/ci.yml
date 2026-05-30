@@ -19,18 +19,18 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore backend/JobEngine.sln
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build backend/JobEngine.sln --no-restore --configuration Release
 
       - name: Unit tests
         run: |
-          dotnet test tests/JobService.Tests --no-build --configuration Release
+          dotnet test backend/tests/JobService.Tests --no-build --configuration Release
 
       - name: Integration tests
         run: |
-          dotnet test tests/Integration.Tests --no-build --configuration Release
+          dotnet test backend/tests/Integration.Tests --no-build --configuration Release
         env:
           DOCKER_HOST: unix:///var/run/docker.sock
 

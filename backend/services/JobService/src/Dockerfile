@@ -10,7 +10,7 @@ COPY services/JobService/src/JobService.Api/JobService.Api.csproj services/JobSe
 RUN dotnet restore services/JobService/src/JobService.Api/JobService.Api.csproj
 COPY . .
 RUN dotnet publish services/JobService/src/JobService.Api/JobService.Api.csproj \
-  -c Release -o /app/publish --no-restore
+  -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
