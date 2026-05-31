@@ -7,4 +7,6 @@ public sealed record JobFailedEvent
     public string Error { get; init; } = default!;
     public int AttemptNum { get; init; }
     public bool IsFinal { get; init; }
+    public string? WebhookUrl { get; init; }
+    public string? WebhookSecret { get; init; }
 }

@@ -24,6 +24,8 @@ public sealed class Job
     public string? WorkerId { get; private set; }
     public string? Error { get; private set; }
     public string? Result { get; private set; }
+    public string? WebhookUrl { get; private set; }
+    public string? WebhookSecret { get; private set; }
     public DateTime ScheduledAt { get; private set; }
     public DateTime? StartedAt { get; private set; }
     public DateTime? CompletedAt { get; private set; }
@@ -34,7 +36,8 @@ public sealed class Job
 
     public static Job Create(Guid tenantId, string type,
         string payload, int priority = 0, int maxAttempts = 3,
-        DateTime? scheduledAt = null)
+        DateTime? scheduledAt = null, string? webhookUrl = null,
+        string? webhookSecret = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(type);
         return new Job
@@ -47,7 +50,9 @@ public sealed class Job
             Priority = priority,
             MaxAttempts = maxAttempts,
             ScheduledAt = scheduledAt ?? DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            WebhookUrl = webhookUrl,
+            WebhookSecret = webhookSecret
         };
     }
 

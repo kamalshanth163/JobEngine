@@ -12,11 +12,26 @@ public sealed class JobCompletedConsumer(
     public async Task Consume(ConsumeContext<JobCompletedEvent> ctx)
     {
         _log.LogInformation("Delivering webhooks for job {Id}", ctx.Message.JobId);
-        await _webhooks.DeliverAsync(
-            ctx.Message.TenantId,
-            "job.completed",
-            ctx.Message,
-            ctx.CancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(ctx.Message.WebhookUrl))
+        {
+            // Per-job webhook — deliver directly to the URL stored at submission time
+            await _webhooks.DeliverDirectAsync(
+                ctx.Message.WebhookUrl,
+                ctx.Message.WebhookSecret,
+                "job.completed",
+                ctx.Message,
+                ctx.CancellationToken);
+        }
+        else
+        {
+            // Fall back to tenant-level webhooks configured via env vars
+            await _webhooks.DeliverAsync(
+                ctx.Message.TenantId,
+                "job.completed",
+                ctx.Message,
+                ctx.CancellationToken);
+        }
     }
 }
 
@@ -31,11 +46,23 @@ public sealed class JobFailedConsumer(
 
         if (ctx.Message.IsFinal) // only fire webhook when fully dead-lettered
         {
-            await _webhooks.DeliverAsync(
-                ctx.Message.TenantId,
-                "job.failed",
-                ctx.Message,
-                ctx.CancellationToken);
+            if (!string.IsNullOrWhiteSpace(ctx.Message.WebhookUrl))
+            {
+                await _webhooks.DeliverDirectAsync(
+                    ctx.Message.WebhookUrl,
+                    ctx.Message.WebhookSecret,
+                    "job.failed",
+                    ctx.Message,
+                    ctx.CancellationToken);
+            }
+            else
+            {
+                await _webhooks.DeliverAsync(
+                    ctx.Message.TenantId,
+                    "job.failed",
+                    ctx.Message,
+                    ctx.CancellationToken);
+            }
         }
     }
 }

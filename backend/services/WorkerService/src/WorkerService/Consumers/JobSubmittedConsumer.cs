@@ -78,7 +78,9 @@ public sealed class JobSubmittedConsumer(
                 JobId = msg.JobId,
                 TenantId = msg.TenantId,
                 Result = result.Output,
-                CompletedAt = DateTime.UtcNow
+                CompletedAt = DateTime.UtcNow,
+                WebhookUrl = msg.WebhookUrl,
+                WebhookSecret = msg.WebhookSecret
             }, ct);
         }
         else
@@ -96,7 +98,9 @@ public sealed class JobSubmittedConsumer(
                 // Attempt number comes from DB after MarkFailed increments/status transition.
                 AttemptNum = failure.Attempt,
                 // True when max attempts are exhausted and job moved to DeadLetter.
-                IsFinal = failure.IsFinal
+                IsFinal = failure.IsFinal,
+                WebhookUrl = msg.WebhookUrl,
+                WebhookSecret = msg.WebhookSecret
             }, ct);
 
             // We publish JobFailedEvent on every failed attempt for observability/alerts.

@@ -9,4 +9,6 @@ public sealed record JobSubmittedEvent
     public int Priority { get; init; }
     public int MaxAttempts { get; init; } = 3;
     public DateTime SubmittedAt { get; init; } = DateTime.UtcNow;
+    public string? WebhookUrl { get; init; }
+    public string? WebhookSecret { get; init; }
 }

@@ -11,7 +11,9 @@ public sealed record SubmitJobCommand(
     string Payload,
     int Priority = 0,
     int MaxAttempts = 3,
-    DateTime? ScheduledAt = null
+    DateTime? ScheduledAt = null,
+    string? WebhookUrl = null,
+    string? WebhookSecret = null
 ) : IRequest<Guid>;
 
 public sealed class SubmitJobHandler(
@@ -30,7 +32,8 @@ public sealed class SubmitJobHandler(
         // 2. Create job aggregate via factory — domain invariants enforced
         var job = Job.Create(
             cmd.TenantId, cmd.Type, cmd.Payload,
-            cmd.Priority, cmd.MaxAttempts, cmd.ScheduledAt);
+            cmd.Priority, cmd.MaxAttempts, cmd.ScheduledAt,
+            cmd.WebhookUrl, cmd.WebhookSecret);
 
         await _jobs.AddAsync(job, ct);
 
@@ -48,7 +51,9 @@ public sealed class SubmitJobHandler(
             Payload = job.Payload,
             Priority = job.Priority,
             MaxAttempts = job.MaxAttempts,
-            SubmittedAt = DateTime.UtcNow
+            SubmittedAt = DateTime.UtcNow,
+            WebhookUrl = job.WebhookUrl,
+            WebhookSecret = job.WebhookSecret
         }, ct);
 
         await _uow.SaveChangesAsync(ct); // save Queued status

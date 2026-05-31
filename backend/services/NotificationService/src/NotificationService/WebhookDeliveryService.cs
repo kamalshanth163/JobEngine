@@ -97,4 +97,16 @@ public sealed class WebhookDeliveryService
         var data = Encoding.UTF8.GetBytes(body);
         return Convert.ToHexString(HMACSHA256.HashData(key, data)).ToLower();
     }
+
+    // Deliver directly to a known URL — used when webhook is stored per-job
+    public async Task DeliverDirectAsync(
+        string url, string? secret, string eventType,
+        object payload, CancellationToken ct)
+    {
+        var body = JsonSerializer.Serialize(payload);
+        var endpoint = new WebhookEndpoint(
+            Guid.NewGuid(), Guid.Empty, url,
+            secret ?? string.Empty, [eventType], true);
+        await DeliverToEndpointAsync(endpoint, eventType, body, ct);
+    }
 }

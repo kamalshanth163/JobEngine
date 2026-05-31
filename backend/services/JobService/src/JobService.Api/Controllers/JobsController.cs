@@ -18,7 +18,8 @@ public sealed class JobsController(IMediator _mediator, ITenantContext _tenant)
     {
         var id = await _mediator.Send(new SubmitJobCommand(
             _tenant.TenantId, req.Type, req.Payload,
-            req.Priority, req.MaxAttempts, req.ScheduledAt), ct);
+            req.Priority, req.MaxAttempts, req.ScheduledAt,
+            req.WebhookUrl, req.WebhookSecret), ct);
         return CreatedAtAction(nameof(Get), new { id }, id);
     }
 
@@ -46,4 +47,6 @@ public record SubmitJobRequest(
     string Payload = "{}",
     int Priority = 0,
     int MaxAttempts = 3,
-    DateTime? ScheduledAt = null);
+    DateTime? ScheduledAt = null,
+    string? WebhookUrl = null,
+    string? WebhookSecret = null);

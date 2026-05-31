@@ -40,6 +40,9 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
         b.Property(j => j.Payload).HasColumnType("jsonb"); // native JSON in PG
         b.Property(j => j.Status).HasConversion<string>().HasMaxLength(20);
 
+        b.Property(j => j.WebhookUrl).HasMaxLength(2048);
+        b.Property(j => j.WebhookSecret).HasMaxLength(256);
+
         // Composite index — critical for worker polling performance
         // WHERE status = 'Queued' AND scheduled_at <= now ORDER BY priority DESC
         b.HasIndex(j => new { j.TenantId, j.Status, j.ScheduledAt })

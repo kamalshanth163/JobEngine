@@ -20,8 +20,9 @@ builder.Services.AddMassTransit(x =>
         var host = GetValueOrDefault(builder.Configuration, "RabbitMQ__Host", "RabbitMQ:Host", "rabbitmq");
         var username = GetValueOrDefault(builder.Configuration, "RabbitMQ__Username", "RabbitMQ:Username", "guest");
         var password = GetValueOrDefault(builder.Configuration, "RabbitMQ__Password", "RabbitMQ:Password", "guest");
+        var virtualHost = GetValueOrDefault(builder.Configuration, "RabbitMQ__VirtualHost", "RabbitMQ:VirtualHost", "/");
 
-        cfg.Host(host, h =>
+        cfg.Host(host, virtualHost, h =>
         {
             h.Username(username);
             h.Password(password);
