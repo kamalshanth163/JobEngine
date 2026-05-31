@@ -1,109 +1,214 @@
-# JobEngine Azure Deployment + CI/CD Guide
+# JobEngine Azure Deployment + CI/CD Guide (GUI First)
 
-This guide covers deploying the full JobEngine stack to Azure and setting up GitHub Actions CI/CD with:
+This guide is written to use the Azure Portal and GitHub UI as much as possible.
 
-- automated tests on every change,
-- staging deployment after tests pass,
-- manual approval before production deployment.
+Scope:
 
-## 1) Target Azure Architecture
+- Deploy backend services (gateway, auth, job, worker, execution, notification) to Azure Container Apps.
+- Deploy frontend to Azure Static Web Apps.
+- Configure CI/CD with staging, smoke check, and manual approval before production.
 
-Recommended pragmatic production setup:
+## 1) What You Will Create
 
-- Frontend (`frontend/jobengine-web`): Azure Static Web Apps
-- API Gateway (`backend/gateway/ApiGateway`): Azure Container Apps
-- Auth Service (`backend/services/AuthService/src/AuthService.Api`): Azure Container Apps
-- Job Service (`backend/services/JobService/src/JobService.Api`): Azure Container Apps
-- Worker Service (`backend/services/WorkerService/src/WorkerService`): Azure Container Apps (scale by replicas)
-- Execution Service (`backend/services/ExecutionService/src/ExecutionService.Api`): Azure Container Apps
-- Notification Service (`backend/services/NotificationService/src/NotificationService`): Azure Container Apps
-- PostgreSQL: Azure Database for PostgreSQL Flexible Server
-- Redis: Azure Cache for Redis
-- RabbitMQ: CloudAMQP (managed) or self-hosted in Azure (VM/ACA)
-- Container Registry: Azure Container Registry (ACR)
-- Secrets and config: Azure Key Vault + Container App secrets/env vars
-- Observability (optional): Azure Monitor / Log Analytics
+- Resource group: `rg-jobengine-prod`
+- Azure Container Registry: `acrjobengineprod`
+- Log Analytics workspace: `law-jobengine-prod`
+- Container Apps environment: `cae-jobengine-prod`
+- PostgreSQL Flexible Server: `pg-jobengine-prod`
+- Redis Cache: `redis-jobengine-prod`
+- RabbitMQ: CloudAMQP (recommended managed option)
+- Container Apps:
+   - `ca-jobengine-gateway`
+   - `ca-jobengine-auth-service`
+   - `ca-jobengine-job-service`
+   - `ca-jobengine-worker-service`
+   - `ca-jobengine-execution-service`
+   - `ca-jobengine-notification-service`
+- Static Web App for frontend
+- GitHub Environments:
+  - `staging`
+  - `production` (with required approval)
 
-## 2) Prerequisites
+## 2) Before You Start
 
-Install and configure:
+- You need Azure subscription access that can create resources.
+- You need GitHub admin access to this repository.
+- You should have Docker installed locally.
 
-- Azure CLI
-- Docker
-- GitHub repository admin access
-- Azure subscription with permission to create resources
+Optional but recommended:
 
-Login:
+- Keep naming exactly as this guide to avoid path and secret confusion.
 
-```bash
-az login
-az account set --subscription "<SUBSCRIPTION_NAME_OR_ID>"
-```
+## 3) Create Core Azure Resources in Portal (Click by Click)
 
-## 3) Azure Resource Bootstrap
+### 3.1 Create Resource Group
 
-Use one resource group for all infra (or split by environment).
+1. Open Azure Portal.
+2. In top search, type `Resource groups`.
+3. Click `Resource groups`.
+4. Click `Create`.
+5. Select your Subscription.
+6. Resource group name: `rg-jobengine-prod`.
+7. Region: `East US`.
+8. Click `Review + create`.
+9. Click `Create`.
 
-```bash
-az group create -n rg-jobengine-prod -l eastus
-```
+### 3.2 Create Azure Container Registry (ACR)
 
-Create ACR:
+1. Search `Container registries`.
+2. Click `Create`.
+3. Resource group: `rg-jobengine-prod`.
+4. Registry name: `acrjobengineprod`.
+5. Location: `East US`.
+6. SKU: `Standard`.
+7. Click `Review + create`.
+8. Click `Create`.
 
-```bash
-az acr create -g rg-jobengine-prod -n acrjobengineprod --sku Standard
-```
+### 3.3 Create Log Analytics Workspace
 
-Create Container Apps environment:
+1. Search `Log Analytics workspaces`.
+2. Click `Create`.
+3. Resource group: `rg-jobengine-prod`.
+4. Name: `law-jobengine-prod`.
+5. Region: `East US`.
+6. Click `Review + create`.
+7. Click `Create`.
 
-```bash
-az monitor log-analytics workspace create \
-  -g rg-jobengine-prod \
-  -n law-jobengine-prod
+### 3.4 Create Container Apps Environment
 
-LAW_ID=$(az monitor log-analytics workspace show -g rg-jobengine-prod -n law-jobengine-prod --query customerId -o tsv)
-LAW_KEY=$(az monitor log-analytics workspace get-shared-keys -g rg-jobengine-prod -n law-jobengine-prod --query primarySharedKey -o tsv)
+1. Search `Container Apps environments`.
+2. Click `Create`.
+3. Resource group: `rg-jobengine-prod`.
+4. Name: `cae-jobengine-prod`.
+5. Region: `East US`.
+6. Open `Logs` section.
+7. Select Log Analytics workspace: `law-jobengine-prod`.
+8. Click `Review + create`.
+9. Click `Create`.
 
-az containerapp env create \
-  -g rg-jobengine-prod \
-  -n cae-jobengine-prod \
-  --logs-workspace-id "$LAW_ID" \
-  --logs-workspace-key "$LAW_KEY" \
-  -l eastus
-```
+### 3.5 Create PostgreSQL Flexible Server
 
-Create PostgreSQL flexible server + DBs:
+1. Search `Azure Database for PostgreSQL flexible servers`.
+2. Click `Create`.
+3. Resource group: `rg-jobengine-prod`.
+4. Server name: `pg-jobengine-prod`.
+5. Region: `East US`.
+6. PostgreSQL version: `16`.
+7. Set admin username and strong password.
+8. Compute tier: start with a small production-safe option.
+9. Networking: allow access needed for Container Apps.
+10. Click `Review + create`.
+11. Click `Create`.
 
-```bash
-az postgres flexible-server create \
-  -g rg-jobengine-prod \
-  -n pg-jobengine-prod \
-  -l eastus \
-  --admin-user pgadmin \
-  --admin-password "<STRONG_PASSWORD>" \
-  --sku-name Standard_B2s \
-  --version 16
+Create databases:
 
-az postgres flexible-server db create -g rg-jobengine-prod -s pg-jobengine-prod -d je_auth
-az postgres flexible-server db create -g rg-jobengine-prod -s pg-jobengine-prod -d je_jobs
-```
+1. Open `pg-jobengine-prod`.
+2. Left menu `Databases`.
+3. Click `Add`.
+4. Create `je_auth`.
+5. Click `Add` again.
+6. Create `je_jobs`.
 
-Create Redis:
+### 3.6 Create Azure Redis Cache
 
-```bash
-az redis create \
-  -g rg-jobengine-prod \
-  -n redis-jobengine-prod \
-  -l eastus \
-  --sku Standard \
-  --vm-size c1
-```
+1. Search `Azure Cache for Redis`.
+2. Click `Create`.
+3. Resource group: `rg-jobengine-prod`.
+4. Name: `redis-jobengine-prod`.
+5. Region: `East US`.
+6. Pricing tier: `Standard`.
+7. Click `Review + create`.
+8. Click `Create`.
 
-## 4) Configuration and Secrets Strategy
+### 3.7 RabbitMQ
 
-Use environment variables per service (already supported by the project).
+Recommended GUI path:
 
-Examples:
+1. In Azure Marketplace, search `CloudAMQP`.
+2. Choose a plan and create instance.
+3. Open CloudAMQP dashboard.
+4. Copy host, username, and password for later secrets.
+
+## 4) Build and Push Backend Images to ACR
+
+You can keep deployment GUI-first, but image build/push is done by GitHub Actions once workflows are configured.
+
+No manual container image push is needed if you follow sections 8 and 9.
+
+## 5) Create Container Apps (One per Service)
+
+Repeat this for each app.
+
+Common values:
+
+- Resource group: `rg-jobengine-prod`
+- Environment: `cae-jobengine-prod`
+- Registry: `acrjobengineprod.azurecr.io`
+- Target port: `8080`
+
+### 5.1 Create Gateway Container App
+
+1. Search `Container Apps`.
+2. Click `Create`.
+3. Name: `ca-jobengine-gateway`.
+4. Resource group: `rg-jobengine-prod`.
+5. Container Apps environment: `cae-jobengine-prod`.
+6. In `Container` tab:
+   - Image source: `Azure Container Registry`.
+   - Image: `jobengine-gateway` (tag can be latest created by CI/CD).
+7. In `Ingress` tab:
+   - Enable ingress: `On`.
+   - Ingress traffic: `Accepting traffic from anywhere`.
+   - Ingress type: `HTTP`.
+   - Target port: `8080`.
+8. In `Scale` tab:
+   - Min replicas: `1`.
+   - Max replicas: `2`.
+9. Click `Review + create`.
+10. Click `Create`.
+
+### 5.2 Create Internal Service Container Apps
+
+Create these app names the same way:
+
+- `ca-jobengine-auth-service`
+- `ca-jobengine-job-service`
+- `ca-jobengine-worker-service`
+- `ca-jobengine-execution-service`
+- `ca-jobengine-notification-service`
+
+For each of these:
+
+1. Create app as above.
+2. In `Ingress`:
+   - Enable ingress: `On` for HTTP services (auth/job/execution), `Off` or internal-only for background services if not externally called.
+   - If enabled, set to internal only.
+3. Target port: `8080`.
+4. For worker service scale:
+   - Min replicas: `1`.
+   - Max replicas: `3` (or higher as needed).
+
+## 6) Configure Secrets and Environment Variables in Container Apps
+
+Do this app by app.
+
+### 6.1 Add Secrets
+
+1. Open a Container App.
+2. Left menu: `Secrets`.
+3. Click `+ Add`.
+4. Add required secrets (connection strings, redis, rabbitmq, jwt).
+5. Click `Save`.
+
+### 6.2 Add Environment Variables
+
+1. Left menu: `Containers`.
+2. Click container `Edit and deploy new revision`.
+3. In environment variables, add keys used by that service.
+4. For sensitive values, choose `Secret reference`.
+5. Click `Deploy`.
+
+Common keys:
 
 - `ConnectionStrings__Auth`
 - `ConnectionStrings__Jobs`
@@ -116,312 +221,190 @@ Examples:
 - `Jwt__Audience`
 - `AuthService__Url`
 - `ExecutionService__Url`
-- `ASPNETCORE_ENVIRONMENT`
+- `ASPNETCORE_ENVIRONMENT=Production`
+
+Gateway-specific notes:
+
+- Use external ingress for gateway.
+- Reverse proxy destination variables must point to internal Container App URLs for auth, job, execution services.
+
+## 7) Deploy Frontend with Static Web Apps (GUI)
 
-Recommended:
+1. Search `Static Web Apps`.
+2. Click `Create`.
+3. Resource group: `rg-jobengine-prod`.
+4. Name: choose your frontend app name (for example `swa-jobengine-prod`).
+5. Hosting plan: Free or Standard.
+6. Deployment source: `GitHub`.
+7. Authorize GitHub when prompted.
+8. Select organization, repository, and branch (`main`).
+9. Build preset: `Custom` if needed.
+10. App location: `frontend/jobengine-web`.
+11. API location: leave empty.
+12. Output location: `dist`.
+13. Click `Review + create`.
+14. Click `Create`.
+
+Set frontend API base URL:
+
+1. Open the Static Web App.
+2. Go to `Configuration` or `Environment variables`.
+3. Add `VITE_API_BASE_URL`.
+4. Value: gateway public URL, for example `https://<gateway-url>`.
+5. Save and trigger redeploy.
+
+## 8) Configure GitHub OIDC and Azure Access (Mostly GUI)
+
+### 8.1 Create App Registration
+
+1. In Azure Portal, search `App registrations`.
+2. Click `New registration`.
+3. Name: `gha-jobengine-oidc`.
+4. Click `Register`.
+5. Copy:
+   - Application (client) ID
+   - Directory (tenant) ID
 
-- Store source of truth in Azure Key Vault.
-- Sync into Container App secrets and map to env vars.
-- Do not hardcode production credentials in GitHub secrets long-term.
+### 8.2 Grant Permissions
 
-## 5) Containerize and Push Images
+1. Open `Subscriptions`.
+2. Select your subscription.
+3. Left menu: `Access control (IAM)`.
+4. Click `Add role assignment`.
+5. Role: Contributor (or custom least-privilege role).
+6. Assign to `gha-jobengine-oidc` application.
+7. Save.
+8. Copy Subscription ID.
 
-The repo already includes Dockerfiles for gateway and services.
+### 8.3 Add Federated Credential
 
-Image naming convention:
+1. Open `gha-jobengine-oidc` app registration.
+2. Left menu: `Certificates & secrets`.
+3. Open `Federated credentials`.
+4. Click `Add credential`.
+5. Choose GitHub Actions scenario.
+6. Fill organization, repository, branch (for example `main`).
+7. Save.
+8. Repeat for `dev` branch if needed.
 
-- `acrjobengineprod.azurecr.io/gateway:<sha>`
-- `acrjobengineprod.azurecr.io/auth-service:<sha>`
-- `acrjobengineprod.azurecr.io/job-service:<sha>`
-- `acrjobengineprod.azurecr.io/worker-service:<sha>`
-- `acrjobengineprod.azurecr.io/execution-service:<sha>`
-- `acrjobengineprod.azurecr.io/notification-service:<sha>`
+## 9) Configure GitHub Repository Secrets and Environments (GUI)
 
-## 6) Deploy Container Apps
+### 9.1 Repository Secrets
 
-Create one Container App per service. Repeat pattern below per service:
+1. Open repository on GitHub.
+2. Go to `Settings`.
+3. Left menu: `Secrets and variables` -> `Actions`.
+4. Click `New repository secret` and add:
+   - `AZURE_CLIENT_ID`
+   - `AZURE_TENANT_ID`
+   - `AZURE_SUBSCRIPTION_ID`
+   - `ACR_NAME`
+   - `ACR_LOGIN_SERVER`
+   - `AZURE_RG`
 
-```bash
-az containerapp create \
-  -g rg-jobengine-prod \
-  -n ca-auth-service \
-  --environment cae-jobengine-prod \
-  --image acrjobengineprod.azurecr.io/auth-service:<tag> \
-  --registry-server acrjobengineprod.azurecr.io \
-  --registry-identity system \
-  --target-port 8080 \
-  --ingress internal \
-  --secrets \
-    conn-auth="<conn-string>" \
-    redis-conn="<redis-conn>" \
-    jwt-secret="<jwt-secret>" \
-  --env-vars \
-    ConnectionStrings__Auth=secretref:conn-auth \
-    Redis__Connection=secretref:redis-conn \
-    Jwt__Secret=secretref:jwt-secret \
-    Jwt__Issuer=jobengine \
-    Jwt__Audience=jobengine-clients \
-    ASPNETCORE_ENVIRONMENT=Production
-```
+### 9.2 Environments + Approval Gate
 
-For the gateway, use external ingress and set reverse proxy destinations to internal service URLs.
+1. In GitHub repo settings, open `Environments`.
+2. Click `New environment`, create `staging`.
+3. Create `production`.
+4. Open `production`.
+5. Under `Deployment protection rules`, add required reviewer(s).
+6. Save.
 
-## 7) Frontend Deployment (Static Web Apps)
+This is your manual approval checkpoint before production deploy.
 
-Create Static Web App and connect to the GitHub repo.
+## 10) CI/CD Workflow Files
 
-Set frontend environment variable:
+Ensure workflow files exist:
 
-- `VITE_API_BASE_URL=https://<gateway-public-url>`
+- `.github/workflows/ci.yml`
+- `.github/workflows/cd.yml`
 
-## 8) GitHub Environments and Approvals
+Current repository conventions (after backend folder refactor):
 
-Create GitHub Environments:
+- Backend solution path: `backend/JobEngine.sln`
+- Dockerfiles under `backend/gateway` and `backend/services`
 
-- `staging`
-- `production`
+The CD workflow should build and push these image repositories:
 
-Configure environment protection:
 
-- `staging`: optional reviewer
-- `production`: required reviewer(s), wait timer optional
 
-This provides manual approval before production deployment.
+- `jobengine-gateway`
+- `jobengine-auth-service`
+- `jobengine-job-service`
+- `jobengine-worker-service`
+- `jobengine-execution-service`
+- `jobengine-notification-service`
 
-## 9) Required GitHub Secrets
+## 11) First End-to-End Deployment (GUI Flow)
 
-Repository secrets (minimum):
+1. Push code to `dev`.
+2. Open GitHub `Actions` tab.
+3. Confirm CI passes.
+4. Merge `dev` to `main`.
+5. CD workflow starts automatically.
+6. Verify staging deploy completes.
+7. Verify smoke check step passes.
+8. Open `Review deployments` when workflow waits.
+9. Approve `production` deployment.
+10. Verify production deployment completes.
 
-- `AZURE_CLIENT_ID`
-- `AZURE_TENANT_ID`
-- `AZURE_SUBSCRIPTION_ID`
-- `ACR_NAME` (example: `acrjobengineprod`)
-- `ACR_LOGIN_SERVER` (example: `acrjobengineprod.azurecr.io`)
-- `AZURE_RG` (example: `rg-jobengine-prod`)
+## 12) Validation Checklist After Deployment
 
-Environment secrets (staging/prod), as needed:
+Backend:
 
-- service-specific connection strings
-- RabbitMQ credentials
-- JWT secret
-- any webhook secrets
+- Gateway public URL responds.
+- Auth API works via gateway.
+- Job submit and status flow works.
+- Worker replicas are running.
+- Notification service receives events.
 
-## 10) CI Workflow (Build + Test)
+Frontend:
 
-Create `.github/workflows/ci.yml`:
+- Static Web App loads successfully.
+- Login and API calls route through gateway URL.
 
-```yaml
-name: CI
+Operations:
 
-on:
-  pull_request:
-    branches: [main, dev]
-  push:
-    branches: [dev]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Restore
-        run: dotnet restore backend/JobEngine.sln
-
-      - name: Build
-        run: dotnet build backend/JobEngine.sln --no-restore --configuration Release
-
-      - name: Run tests
-        run: dotnet test backend/JobEngine.sln --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Frontend install and build
-        working-directory: frontend/jobengine-web
-        run: |
-          npm ci
-          npm run build
-```
-
-## 11) CD Workflow (Staging + Approval + Production)
-
-Create `.github/workflows/cd.yml`:
-
-```yaml
-name: CD
-
-on:
-  push:
-    branches: [main]
-
-permissions:
-  id-token: write
-  contents: read
-
-jobs:
-  build-and-push-images:
-    runs-on: ubuntu-latest
-    outputs:
-      image_tag: ${{ steps.vars.outputs.image_tag }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set vars
-        id: vars
-        run: echo "image_tag=${GITHUB_SHA}" >> $GITHUB_OUTPUT
-
-      - name: Azure login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: ACR login
-        run: az acr login -n ${{ secrets.ACR_NAME }}
-
-      - name: Build and push images
-        run: |
-          TAG=${{ steps.vars.outputs.image_tag }}
-          ACR=${{ secrets.ACR_LOGIN_SERVER }}
-
-          docker build -f backend/gateway/ApiGateway/Dockerfile -t $ACR/gateway:$TAG .
-          docker build -f backend/services/AuthService/src/Dockerfile -t $ACR/auth-service:$TAG .
-          docker build -f backend/services/JobService/src/Dockerfile -t $ACR/job-service:$TAG .
-          docker build -f backend/services/WorkerService/src/WorkerService/Dockerfile -t $ACR/worker-service:$TAG .
-          docker build -f backend/services/ExecutionService/src/Dockerfile -t $ACR/execution-service:$TAG .
-          docker build -f backend/services/NotificationService/src/NotificationService/Dockerfile -t $ACR/notification-service:$TAG .
-
-          docker push $ACR/gateway:$TAG
-          docker push $ACR/auth-service:$TAG
-          docker push $ACR/job-service:$TAG
-          docker push $ACR/worker-service:$TAG
-          docker push $ACR/execution-service:$TAG
-          docker push $ACR/notification-service:$TAG
-
-  deploy-staging:
-    runs-on: ubuntu-latest
-    needs: build-and-push-images
-    environment: staging
-
-    steps:
-      - name: Azure login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Deploy staging revision
-        run: |
-          TAG=${{ needs.build-and-push-images.outputs.image_tag }}
-          ACR=${{ secrets.ACR_LOGIN_SERVER }}
-          RG=${{ secrets.AZURE_RG }}
-
-          az containerapp update -g $RG -n ca-gateway --image $ACR/gateway:$TAG
-          az containerapp update -g $RG -n ca-auth-service --image $ACR/auth-service:$TAG
-          az containerapp update -g $RG -n ca-job-service --image $ACR/job-service:$TAG
-          az containerapp update -g $RG -n ca-worker-service --image $ACR/worker-service:$TAG
-          az containerapp update -g $RG -n ca-execution-service --image $ACR/execution-service:$TAG
-          az containerapp update -g $RG -n ca-notification-service --image $ACR/notification-service:$TAG
-
-  smoke-tests-staging:
-    runs-on: ubuntu-latest
-    needs: deploy-staging
-
-    steps:
-      - name: Gateway health
-        run: |
-          curl -f https://<staging-gateway-url>/health
-
-  deploy-production:
-    runs-on: ubuntu-latest
-    needs: [build-and-push-images, smoke-tests-staging]
-    environment: production
-
-    steps:
-      - name: Azure login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Deploy production revision
-        run: |
-          TAG=${{ needs.build-and-push-images.outputs.image_tag }}
-          ACR=${{ secrets.ACR_LOGIN_SERVER }}
-          RG=${{ secrets.AZURE_RG }}
-
-          az containerapp update -g $RG -n ca-gateway --image $ACR/gateway:$TAG
-          az containerapp update -g $RG -n ca-auth-service --image $ACR/auth-service:$TAG
-          az containerapp update -g $RG -n ca-job-service --image $ACR/job-service:$TAG
-          az containerapp update -g $RG -n ca-worker-service --image $ACR/worker-service:$TAG
-          az containerapp update -g $RG -n ca-execution-service --image $ACR/execution-service:$TAG
-          az containerapp update -g $RG -n ca-notification-service --image $ACR/notification-service:$TAG
-```
-
-Important:
-
-- Production deployment will pause for manual approval if environment protection is configured for `production`.
-- This satisfies the tests + approval gate requirement.
-
-## 12) Recommended Release Policy
-
-- PR to `dev`: run CI only.
-- Merge `dev` to `main`: run CI + CD staging + smoke tests + manual approval + production.
-
-## 13) Post-Deployment Validation
-
-Verify:
-
-- Gateway health endpoint returns 200.
-- Auth login/register through gateway works.
-- Job submit and status flow works end-to-end.
-- RabbitMQ queue depth and worker throughput are healthy.
-- Notification webhooks are delivered and signed.
-- Logs are visible for all services.
-
-## 14) Rollback Plan
-
-Container Apps supports revision-based rollback:
-
-1. List revisions.
-2. Activate previous stable revision.
-3. Deactivate bad revision.
-
-Example:
-
-```bash
-az containerapp revision list -g rg-jobengine-prod -n ca-job-service -o table
-az containerapp revision activate -g rg-jobengine-prod -n ca-job-service --revision <revision-name>
-```
-
-## 15) Security and Hardening Checklist
-
-- Use OIDC federation from GitHub to Azure (avoid static service principal secrets).
-- Restrict public ingress to gateway only.
-- Keep internal services on internal ingress.
-- Store secrets in Key Vault and rotate regularly.
-- Enable branch protection (required reviews, status checks).
-- Enable Dependabot and container image scanning.
-
----
-
-If needed, this guide can be split into:
-
-- `docs/Azure-Infrastructure-Setup.md`
-- `docs/GitHub-Actions-CI-CD.md`
-- `docs/Runbook-Rollback-and-Operations.md`
+- Container App `Logs` show healthy startup.
+- PostgreSQL, Redis, RabbitMQ metrics look healthy.
+
+## 13) Rollback (GUI)
+
+For a failed deployment:
+
+1. Open target Container App.
+2. Go to `Revisions`.
+3. Find previous stable revision.
+4. Set traffic back to stable revision (or activate stable revision).
+5. Reduce traffic to bad revision to 0%.
+
+## 14) Security Checklist
+
+- Keep only gateway externally exposed.
+- Keep internal services private/internal.
+- Store secrets in Key Vault or Container App secrets.
+- Avoid long-lived credentials in GitHub.
+- Use OIDC federation for GitHub to Azure.
+- Enable branch protection and required checks.
+
+## 15) Quick Troubleshooting
+
+If GitHub workflow fails:
+
+1. Open the failed job in `Actions`.
+2. Check failing step and exact command.
+3. Verify required secrets exist and are named exactly.
+4. Verify ACR image names/tags are correct.
+
+If gateway returns 502/503:
+
+1. Open `ca-jobengine-gateway` -> `Logs`.
+2. Check reverse proxy destination env vars.
+3. Confirm target services are healthy and internal URLs are correct.
+
+If frontend cannot call API:
+
+1. Verify `VITE_API_BASE_URL` in Static Web App settings.
+2. Verify gateway ingress is external and HTTPS URL is correct.
+3. Redeploy frontend after changing config.
