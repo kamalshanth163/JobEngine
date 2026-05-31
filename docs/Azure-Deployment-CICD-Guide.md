@@ -228,6 +228,32 @@ Gateway-specific notes:
 - Use external ingress for gateway.
 - Reverse proxy destination variables must point to internal Container App URLs for auth, job, execution services.
 
+### 6.3 Gateway Ingress + Reverse Proxy Destinations (Required)
+
+Use this pattern to avoid 502/503 from gateway and to keep backend services private.
+
+1. Configure backend apps as internal:
+   - Open `ca-jobengine-auth-service` -> `Ingress`.
+   - Set ingress to internal-only (`Limited to Container Apps Environment`) with target port `8080`.
+   - Repeat for `ca-jobengine-job-service` and `ca-jobengine-execution-service`.
+2. Configure gateway as external:
+   - Open `ca-jobengine-gateway` -> `Ingress`.
+   - Set ingress to external (`Accepting traffic from anywhere`) with target port `8080`.
+3. Copy each backend internal URL:
+   - Open each backend app `Overview` page and copy its `Application Url`.
+   - Expected format is internal FQDN like:
+     - `https://ca-jobengine-auth-service.internal.<env>.<region>.azurecontainerapps.io`
+4. Set YARP destination environment variables on the gateway:
+   - Open `ca-jobengine-gateway` -> `Containers` -> `Edit and deploy new revision`.
+   - Add or update:
+     - `ReverseProxy__Clusters__auth-cluster__Destinations__auth-service__Address = https://<auth-internal-url>`
+     - `ReverseProxy__Clusters__jobs-cluster__Destinations__job-service__Address = https://<job-internal-url>`
+     - `ReverseProxy__Clusters__execution-cluster__Destinations__execution-service__Address = https://<execution-internal-url>`
+   - Deploy the new revision.
+5. Validate:
+   - Call gateway auth and jobs endpoints through the public gateway URL.
+   - If gateway returns `502` or `503`, verify destination URLs are internal URLs and point to healthy internal revisions.
+
 ## 7) Deploy Frontend with Static Web Apps (GUI)
 
 1. Search `Static Web Apps`.

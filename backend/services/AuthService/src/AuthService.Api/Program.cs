@@ -2,9 +2,12 @@ using AuthService.Application;
 using AuthService.Infrastructure;
 using AuthService.Infrastructure.Persistence;
 using AuthService.Infrastructure.Services;
+using JobEngine.Shared.Common;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Text.Json;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +37,36 @@ builder.Services.AddHealthChecks();
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var ex = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+        var (statusCode, title) = ex switch
+        {
+            UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
+            ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
+            NotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
+            QuotaExceededException => (StatusCodes.Status429TooManyRequests, "Too Many Requests"),
+            KeyNotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
+            ArgumentException => (StatusCodes.Status400BadRequest, "Bad Request"),
+            _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
+        };
+
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/json";
+
+        var body = JsonSerializer.Serialize(new
+        {
+            status = statusCode,
+            title,
+            detail = ex?.Message
+        });
+
+        await context.Response.WriteAsync(body);
+    });
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

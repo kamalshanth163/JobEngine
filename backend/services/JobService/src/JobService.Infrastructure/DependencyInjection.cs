@@ -42,11 +42,14 @@ public static class DependencyInjection
         {
             x.UsingRabbitMq((ctx, cfg) =>
             {
-                var rabbitHost = configuration["RabbitMQ__Host"] ?? "rabbitmq";
-                var rabbitUsername = configuration["RabbitMQ__Username"] ?? "guest";
-                var rabbitPassword = configuration["RabbitMQ__Password"] ?? "guest";
+                var rabbitHost = GetRequiredSetting(configuration, "RabbitMQ__Host", "RabbitMQ:Host");
+                var rabbitUsername = GetRequiredSetting(configuration, "RabbitMQ__Username", "RabbitMQ:Username");
+                var rabbitPassword = GetRequiredSetting(configuration, "RabbitMQ__Password", "RabbitMQ:Password");
+                var rabbitVirtualHost = configuration["RabbitMQ__VirtualHost"]
+                    ?? configuration["RabbitMQ:VirtualHost"]
+                    ?? "/";
 
-                cfg.Host(rabbitHost, h =>
+                cfg.Host(rabbitHost, rabbitVirtualHost, h =>
                 {
                     h.Username(rabbitUsername);
                     h.Password(rabbitPassword);
@@ -65,5 +68,22 @@ public static class DependencyInjection
 
         // Note: HttpTenantContext and HttpContextAccessor are provided by the Api project.
         return services;
+    }
+
+    private static string GetRequiredSetting(
+        IConfiguration configuration,
+        string primaryKey,
+        string fallbackKey)
+    {
+        var primary = configuration[primaryKey];
+        if (!string.IsNullOrWhiteSpace(primary))
+            return primary;
+
+        var fallback = configuration[fallbackKey];
+        if (!string.IsNullOrWhiteSpace(fallback))
+            return fallback;
+
+        throw new InvalidOperationException(
+            $"Missing configuration value: {primaryKey} (or {fallbackKey})");
     }
 }
