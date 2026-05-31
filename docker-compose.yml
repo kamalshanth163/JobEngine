@@ -42,6 +42,7 @@ services:
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Username=guest
       - RabbitMQ__Password=guest
+      - RabbitMQ__VirtualHost=/
       - Redis__Connection=redis:6379
       - Jwt__Secret=${JWT_SECRET:-dev-secret-change-in-prod-min-32-chars}
       - Jwt__Issuer=jobengine
@@ -59,6 +60,9 @@ services:
       replicas: 3
     environment:
       - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=guest
+      - RabbitMQ__Password=guest
+      - RabbitMQ__VirtualHost=/
       - Redis__Connection=redis:6379
       - ExecutionService__Url=http://execution-service:8080
       - ConnectionStrings__Jobs=Host=postgres;Database=je_jobs;Username=postgres;Password=dev
@@ -80,6 +84,9 @@ services:
       dockerfile: services/NotificationService/src/NotificationService/Dockerfile
     environment:
       - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=guest
+      - RabbitMQ__Password=guest
+      - RabbitMQ__VirtualHost=/
       - ConnectionStrings__Jobs=Host=postgres;Database=je_jobs;Username=postgres;Password=dev
     depends_on: [rabbitmq]
     networks: [jobengine]
