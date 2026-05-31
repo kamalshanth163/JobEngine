@@ -15,6 +15,8 @@ export const NewJobPage = () => {
     priority: 0,
     maxAttempts: 3,
     scheduledAt: "",
+    webhookUrl: "",
+    webhookSecret: "",
   });
 
   const errorText = useMemo(() => {
@@ -40,6 +42,8 @@ export const NewJobPage = () => {
       priority: Number(form.priority),
       maxAttempts: Number(form.maxAttempts),
       scheduledAt: form.scheduledAt || undefined,
+      webhookUrl: form.webhookUrl.trim() || undefined,
+      webhookSecret: form.webhookSecret.trim() || undefined,
     }).unwrap();
 
     dispatch(
@@ -112,6 +116,30 @@ export const NewJobPage = () => {
             value={form.scheduledAt}
             onChange={(event) =>
               setForm((prev) => ({ ...prev, scheduledAt: event.target.value }))
+            }
+          />
+        </label>
+
+        <label>
+          Webhook URL (optional)
+          <input
+            type="url"
+            placeholder="https://webhook.site/your-id"
+            value={form.webhookUrl}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, webhookUrl: event.target.value }))
+            }
+          />
+        </label>
+
+        <label>
+          Webhook Secret (optional)
+          <input
+            type="text"
+            placeholder="Used for HMAC signature"
+            value={form.webhookSecret}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, webhookSecret: event.target.value }))
             }
           />
         </label>

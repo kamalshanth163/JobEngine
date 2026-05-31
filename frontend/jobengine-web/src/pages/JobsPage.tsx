@@ -72,6 +72,7 @@ export const JobsPage = () => {
                 <th>Job Id</th>
                 <th>Type</th>
                 <th>Status</th>
+                <th>Webhook</th>
                 <th>Attempts</th>
                 <th>Priority</th>
                 <th>Created</th>
@@ -86,6 +87,7 @@ export const JobsPage = () => {
                   <td>
                     <StatusPill status={job.status} />
                   </td>
+                  <td>{job.webhookUrl ? "Enabled" : "-"}</td>
                   <td>
                     {job.attempt}/{job.maxAttempts}
                   </td>
@@ -100,12 +102,12 @@ export const JobsPage = () => {
               ))}
               {isLoading && (
                 <tr>
-                  <td colSpan={7}>Loading jobs...</td>
+                  <td colSpan={8}>Loading jobs...</td>
                 </tr>
               )}
               {!isLoading && filteredJobs.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="muted">
+                  <td colSpan={8} className="muted">
                     No jobs match your filters.
                   </td>
                 </tr>

@@ -26,12 +26,14 @@ public sealed record JobDto(
     Guid Id, Guid TenantId, string Type,
     string Status, int Attempt, int MaxAttempts,
     int Priority, string? Error, string? Result,
-    DateTime CreatedAt, DateTime? StartedAt, DateTime? CompletedAt
+    DateTime CreatedAt, DateTime? StartedAt, DateTime? CompletedAt,
+    string? WebhookUrl
 )
 {
     public static JobDto FromDomain(Job j) => new(
         j.Id, j.TenantId, j.Type,
         j.Status.ToString(), j.Attempt, j.MaxAttempts,
         j.Priority, j.Error, j.Result,
-        j.CreatedAt, j.StartedAt, j.CompletedAt);
+        j.CreatedAt, j.StartedAt, j.CompletedAt,
+        j.WebhookUrl);
 }

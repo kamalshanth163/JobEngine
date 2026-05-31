@@ -78,6 +78,14 @@ export const JobDetailsPage = () => {
             <span>Polling</span>
             <strong>{isTerminal ? "Stopped (terminal)" : "Every 5s"}</strong>
           </div>
+          <div>
+            <span>Webhook</span>
+            <strong>{job.webhookUrl ? "Enabled" : "Disabled"}</strong>
+          </div>
+          <div>
+            <span>Webhook URL</span>
+            <strong>{job.webhookUrl ?? "-"}</strong>
+          </div>
         </div>
       </div>
 

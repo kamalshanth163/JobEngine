@@ -56,6 +56,8 @@ export interface SubmitJobRequest {
   priority: number;
   maxAttempts: number;
   scheduledAt?: string;
+  webhookUrl?: string;
+  webhookSecret?: string;
 }
 
 export interface JobDto {
@@ -71,6 +73,7 @@ export interface JobDto {
   createdAt: string;
   startedAt?: string;
   completedAt?: string;
+  webhookUrl?: string;
 }
 
 export interface ExecuteRequest {
