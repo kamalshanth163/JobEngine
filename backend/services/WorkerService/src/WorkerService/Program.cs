@@ -1,4 +1,5 @@
 using MassTransit;
+using JobEngine.Shared.Contracts.Events;
 using JobService.Application.Common.Interfaces;
 using JobService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -20,8 +21,8 @@ builder.Services.AddScoped<IJobStatusUpdater, JobStatusUpdater>();
 builder.Services.AddSingleton<IWorkerIdentity, WorkerIdentity>();
 builder.Services.AddHostedService<HeartbeatService>();
 
-var redisConnection = GetRequiredSetting(builder.Configuration, "Redis:Connection");
-var executionServiceUrl = GetRequiredSetting(builder.Configuration, "ExecutionService:Url");
+var redisConnection = GetRequiredSetting(builder.Configuration, "Redis:Connection", "Redis__Connection");
+var executionServiceUrl = GetRequiredSetting(builder.Configuration, "ExecutionService:Url", "ExecutionService__Url");
 
 // Redis — single multiplexer shared across all consumers
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
@@ -40,11 +41,14 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((ctx, cfg) =>
     {
-        var rabbitHost = builder.Configuration["RabbitMQ:Host"] ?? "rabbitmq";
-        var rabbitUsername = builder.Configuration["RabbitMQ:Username"] ?? "guest";
-        var rabbitPassword = builder.Configuration["RabbitMQ:Password"] ?? "guest";
+        var rabbitHost = GetRequiredSetting(builder.Configuration, "RabbitMQ__Host", "RabbitMQ:Host");
+        var rabbitUsername = GetRequiredSetting(builder.Configuration, "RabbitMQ__Username", "RabbitMQ:Username");
+        var rabbitPassword = GetRequiredSetting(builder.Configuration, "RabbitMQ__Password", "RabbitMQ:Password");
+        var rabbitVirtualHost = builder.Configuration["RabbitMQ__VirtualHost"]
+            ?? builder.Configuration["RabbitMQ:VirtualHost"]
+            ?? "/";
 
-        cfg.Host(rabbitHost, h =>
+        cfg.Host(rabbitHost, rabbitVirtualHost, h =>
         {
             h.Username(rabbitUsername);
             h.Password(rabbitPassword);
@@ -52,6 +56,9 @@ builder.Services.AddMassTransit(x =>
 
         cfg.ReceiveEndpoint("job-submitted", e =>
         {
+            // Explicitly bind message exchange to this queue for cross-service publish/consume.
+            e.Bind<JobSubmittedEvent>();
+
             // Manual ACK — message stays in queue until we explicitly ACK
             // If worker crashes, RabbitMQ redelivers to another worker
             e.PrefetchCount = 5;
@@ -80,8 +87,17 @@ builder.Services.AddHttpClient<IExecutionServiceClient, ExecutionServiceClient>(
 var app = builder.Build();
 await app.RunAsync();
 
-static string GetRequiredSetting(IConfiguration configuration, string key)
+static string GetRequiredSetting(
+    IConfiguration configuration,
+    params string[] keys)
 {
-    return configuration[key]
-        ?? throw new InvalidOperationException($"Missing configuration value: {key}");
+    foreach (var key in keys)
+    {
+        var value = configuration[key];
+        if (!string.IsNullOrWhiteSpace(value))
+            return value;
+    }
+
+    throw new InvalidOperationException(
+        $"Missing configuration value. Checked keys: {string.Join(", ", keys)}");
 }
