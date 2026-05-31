@@ -2,6 +2,8 @@
 # Run: docker compose up --build
 # All services, databases, messaging, and observability in one command
 
+name: jobengine
+
 services:
   # -- API Gateway (YARP reverse proxy) ------------------
   gateway:

@@ -1,9 +1,11 @@
+name: jobengine
+
 services:
   gateway:
     build: null
     image: mcr.microsoft.com/dotnet/sdk:10.0
     pull_policy: always
-    container_name: je-debug-gateway
+    container_name: jobengine-debug-gateway
     entrypoint: ["sh", "-lc"]
     working_dir: /src
     environment:
@@ -23,7 +25,7 @@ services:
     build: null
     image: mcr.microsoft.com/dotnet/sdk:10.0
     pull_policy: always
-    container_name: je-debug-auth-service
+    container_name: jobengine-debug-auth-service
     entrypoint: ["sh", "-lc"]
     working_dir: /src
     environment:
@@ -45,7 +47,7 @@ services:
     build: null
     image: mcr.microsoft.com/dotnet/sdk:10.0
     pull_policy: always
-    container_name: je-debug-job-service
+    container_name: jobengine-debug-job-service
     entrypoint: ["sh", "-lc"]
     working_dir: /src
     environment:
@@ -71,7 +73,7 @@ services:
     build: null
     image: mcr.microsoft.com/dotnet/sdk:10.0
     pull_policy: always
-    container_name: je-debug-execution-service
+    container_name: jobengine-debug-execution-service
     entrypoint: ["sh", "-lc"]
     working_dir: /src
     environment:
@@ -88,7 +90,7 @@ services:
     build: null
     image: mcr.microsoft.com/dotnet/sdk:10.0
     pull_policy: always
-    container_name: je-debug-worker-service
+    container_name: jobengine-debug-worker-service
     deploy:
       replicas: 1
     entrypoint: ["sh", "-lc"]
@@ -110,7 +112,7 @@ services:
     build: null
     image: mcr.microsoft.com/dotnet/sdk:10.0
     pull_policy: always
-    container_name: je-debug-notification-service
+    container_name: jobengine-debug-notification-service
     entrypoint: ["sh", "-lc"]
     working_dir: /src
     environment:
