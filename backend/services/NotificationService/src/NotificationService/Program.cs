@@ -17,9 +17,9 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((ctx, cfg) =>
     {
-        var host = builder.Configuration["RabbitMQ__Host"] ?? "rabbitmq";
-        var username = builder.Configuration["RabbitMQ__Username"] ?? "guest";
-        var password = builder.Configuration["RabbitMQ__Password"] ?? "guest";
+        var host = GetValueOrDefault(builder.Configuration, "RabbitMQ__Host", "RabbitMQ:Host", "rabbitmq");
+        var username = GetValueOrDefault(builder.Configuration, "RabbitMQ__Username", "RabbitMQ:Username", "guest");
+        var password = GetValueOrDefault(builder.Configuration, "RabbitMQ__Password", "RabbitMQ:Password", "guest");
 
         cfg.Host(host, h =>
         {
@@ -32,3 +32,20 @@ builder.Services.AddMassTransit(x =>
 
 var app = builder.Build();
 await app.RunAsync();
+
+static string GetValueOrDefault(IConfiguration configuration, string primaryKey, string fallbackKey, string defaultValue)
+{
+    var primary = configuration[primaryKey];
+    if (!string.IsNullOrWhiteSpace(primary))
+    {
+        return primary;
+    }
+
+    var fallback = configuration[fallbackKey];
+    if (!string.IsNullOrWhiteSpace(fallback))
+    {
+        return fallback;
+    }
+
+    return defaultValue;
+}
