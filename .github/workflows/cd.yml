@@ -1,0 +1,188 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - backend/**
+      - .github/workflows/cd.yml
+  workflow_dispatch:
+
+concurrency:
+  group: cd-main
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  ACR_NAME: ${{ secrets.ACR_NAME }}
+  ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.image-tag.outputs.image_tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Docker login to ACR
+        run: |
+          az acr login --name "$ACR_NAME"
+
+      - name: Resolve image tag
+        id: image-tag
+        run: |
+          echo "image_tag=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push backend images
+        env:
+          IMAGE_TAG: ${{ steps.image-tag.outputs.image_tag }}
+        run: |
+          set -euo pipefail
+
+          docker build -f backend/gateway/ApiGateway/Dockerfile \
+            -t "$ACR_LOGIN_SERVER/jobengine-gateway:$IMAGE_TAG" \
+            -t "$ACR_LOGIN_SERVER/jobengine-gateway:latest" \
+            backend
+          docker push "$ACR_LOGIN_SERVER/jobengine-gateway:$IMAGE_TAG"
+          docker push "$ACR_LOGIN_SERVER/jobengine-gateway:latest"
+
+          docker build -f backend/services/AuthService/src/Dockerfile \
+            -t "$ACR_LOGIN_SERVER/jobengine-auth-service:$IMAGE_TAG" \
+            -t "$ACR_LOGIN_SERVER/jobengine-auth-service:latest" \
+            backend
+          docker push "$ACR_LOGIN_SERVER/jobengine-auth-service:$IMAGE_TAG"
+          docker push "$ACR_LOGIN_SERVER/jobengine-auth-service:latest"
+
+          docker build -f backend/services/JobService/src/Dockerfile \
+            -t "$ACR_LOGIN_SERVER/jobengine-job-service:$IMAGE_TAG" \
+            -t "$ACR_LOGIN_SERVER/jobengine-job-service:latest" \
+            backend
+          docker push "$ACR_LOGIN_SERVER/jobengine-job-service:$IMAGE_TAG"
+          docker push "$ACR_LOGIN_SERVER/jobengine-job-service:latest"
+
+          docker build -f backend/services/WorkerService/src/WorkerService/Dockerfile \
+            -t "$ACR_LOGIN_SERVER/jobengine-worker-service:$IMAGE_TAG" \
+            -t "$ACR_LOGIN_SERVER/jobengine-worker-service:latest" \
+            backend
+          docker push "$ACR_LOGIN_SERVER/jobengine-worker-service:$IMAGE_TAG"
+          docker push "$ACR_LOGIN_SERVER/jobengine-worker-service:latest"
+
+          docker build -f backend/services/ExecutionService/src/Dockerfile \
+            -t "$ACR_LOGIN_SERVER/jobengine-execution-service:$IMAGE_TAG" \
+            -t "$ACR_LOGIN_SERVER/jobengine-execution-service:latest" \
+            backend
+          docker push "$ACR_LOGIN_SERVER/jobengine-execution-service:$IMAGE_TAG"
+          docker push "$ACR_LOGIN_SERVER/jobengine-execution-service:latest"
+
+          docker build -f backend/services/NotificationService/src/NotificationService/Dockerfile \
+            -t "$ACR_LOGIN_SERVER/jobengine-notification-service:$IMAGE_TAG" \
+            -t "$ACR_LOGIN_SERVER/jobengine-notification-service:latest" \
+            backend
+          docker push "$ACR_LOGIN_SERVER/jobengine-notification-service:$IMAGE_TAG"
+          docker push "$ACR_LOGIN_SERVER/jobengine-notification-service:latest"
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: staging
+    env:
+      IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+      AZURE_RG: ${{ secrets.AZURE_RG }}
+      CA_GATEWAY_NAME: ${{ vars.CA_GATEWAY_NAME }}
+      CA_AUTH_NAME: ${{ vars.CA_AUTH_NAME }}
+      CA_JOB_NAME: ${{ vars.CA_JOB_NAME }}
+      CA_WORKER_NAME: ${{ vars.CA_WORKER_NAME }}
+      CA_EXECUTION_NAME: ${{ vars.CA_EXECUTION_NAME }}
+      CA_NOTIFICATION_NAME: ${{ vars.CA_NOTIFICATION_NAME }}
+
+    steps:
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy images to staging Container Apps
+        run: |
+          set -euo pipefail
+          az config set extension.use_dynamic_install=yes_without_prompt
+
+          gateway_app="${CA_GATEWAY_NAME:-ca-jobengine-gateway}"
+          auth_app="${CA_AUTH_NAME:-ca-jobengine-auth-service}"
+          job_app="${CA_JOB_NAME:-ca-jobengine-job-service}"
+          worker_app="${CA_WORKER_NAME:-ca-jobengine-worker-service}"
+          execution_app="${CA_EXECUTION_NAME:-ca-jobengine-execution-service}"
+          notification_app="${CA_NOTIFICATION_NAME:-ca-jobengine-notification-service}"
+
+          az containerapp update --name "$gateway_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-gateway:$IMAGE_TAG"
+          az containerapp update --name "$auth_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-auth-service:$IMAGE_TAG"
+          az containerapp update --name "$job_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-job-service:$IMAGE_TAG"
+          az containerapp update --name "$worker_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-worker-service:$IMAGE_TAG"
+          az containerapp update --name "$execution_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-execution-service:$IMAGE_TAG"
+          az containerapp update --name "$notification_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-notification-service:$IMAGE_TAG"
+
+      - name: Smoke check gateway
+        env:
+          STAGING_GATEWAY_HEALTH_URL: ${{ secrets.STAGING_GATEWAY_HEALTH_URL }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${STAGING_GATEWAY_HEALTH_URL:-}" ]]; then
+            curl --fail --show-error --location --retry 5 --retry-delay 10 "$STAGING_GATEWAY_HEALTH_URL"
+          else
+            echo "STAGING_GATEWAY_HEALTH_URL not set; skipping smoke check."
+          fi
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-staging]
+    environment: production
+    env:
+      IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+      AZURE_RG: ${{ secrets.AZURE_RG }}
+      CA_GATEWAY_NAME: ${{ vars.CA_GATEWAY_NAME }}
+      CA_AUTH_NAME: ${{ vars.CA_AUTH_NAME }}
+      CA_JOB_NAME: ${{ vars.CA_JOB_NAME }}
+      CA_WORKER_NAME: ${{ vars.CA_WORKER_NAME }}
+      CA_EXECUTION_NAME: ${{ vars.CA_EXECUTION_NAME }}
+      CA_NOTIFICATION_NAME: ${{ vars.CA_NOTIFICATION_NAME }}
+
+    steps:
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy images to production Container Apps
+        run: |
+          set -euo pipefail
+          az config set extension.use_dynamic_install=yes_without_prompt
+
+          gateway_app="${CA_GATEWAY_NAME:-ca-jobengine-gateway}"
+          auth_app="${CA_AUTH_NAME:-ca-jobengine-auth-service}"
+          job_app="${CA_JOB_NAME:-ca-jobengine-job-service}"
+          worker_app="${CA_WORKER_NAME:-ca-jobengine-worker-service}"
+          execution_app="${CA_EXECUTION_NAME:-ca-jobengine-execution-service}"
+          notification_app="${CA_NOTIFICATION_NAME:-ca-jobengine-notification-service}"
+
+          az containerapp update --name "$gateway_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-gateway:$IMAGE_TAG"
+          az containerapp update --name "$auth_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-auth-service:$IMAGE_TAG"
+          az containerapp update --name "$job_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-job-service:$IMAGE_TAG"
+          az containerapp update --name "$worker_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-worker-service:$IMAGE_TAG"
+          az containerapp update --name "$execution_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-execution-service:$IMAGE_TAG"
+          az containerapp update --name "$notification_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-notification-service:$IMAGE_TAG"
