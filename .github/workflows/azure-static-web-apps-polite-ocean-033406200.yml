@@ -21,6 +21,14 @@ jobs:
         with:
           submodules: true
           lfs: false
+      - name: Validate API base URL config
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          if [[ -z "${VITE_API_BASE_URL:-}" ]]; then
+            echo "VITE_API_BASE_URL is empty. Set repository variable VITE_API_BASE_URL before deploying frontend."
+            exit 1
+          fi
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1

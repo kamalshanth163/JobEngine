@@ -14,7 +14,8 @@ import type {
 } from "../types/contracts";
 import type { RootState } from "../app/store";
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
+const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").trim();
+const apiBaseUrl = configuredApiBaseUrl || "http://localhost:8080";
 
 export const api = createApi({
   reducerPath: "api",
