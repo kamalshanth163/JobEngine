@@ -2,7 +2,11 @@ using Yarp.ReverseProxy;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+var allowedOriginsFromArray = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+var allowedOriginsFromCsv = builder.Configuration["Cors:AllowedOriginsCsv"]
+    ?.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+var allowedOrigins = (allowedOriginsFromArray ?? allowedOriginsFromCsv)
     ?? [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
