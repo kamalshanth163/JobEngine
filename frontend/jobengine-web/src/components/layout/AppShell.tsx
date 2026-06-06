@@ -106,7 +106,7 @@ export const AppShell = () => {
 
           <div className="status-group">
             <span className="dot" />
-            <span>Gateway: {import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080"}</span>
+            <span>Gateway: {import.meta.env.VITE_API_BASE_URL ?? "not-configured"}</span>
           </div>
         </header>
 
