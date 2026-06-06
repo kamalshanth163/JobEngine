@@ -9,7 +9,7 @@ JobEngine is a microservices platform with 6 independent services:
 ```
 Client → API Gateway (YARP) → Auth Service     → PostgreSQL (je_auth)
                              → Job Service      → PostgreSQL (je_jobs)
-                             → RabbitMQ ─────── → Worker Service (3 replicas)
+                             → RabbitMQ ------- → Worker Service (3 replicas)
                                                 → Execution Service
                                                 → Notification Service
 
