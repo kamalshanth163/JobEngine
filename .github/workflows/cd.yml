@@ -126,7 +126,15 @@ jobs:
           job_app="${CA_JOB_NAME:-ca-jobengine-job-service}"
           worker_app="${CA_WORKER_NAME:-ca-jobengine-worker-service}"
           execution_app="${CA_EXECUTION_NAME:-ca-jobengine-execution-service}"
-          notification_app="${CA_NOTIFICATION_NAME:-ca-jobengine-notification-service}"
+          notification_app="${CA_NOTIFICATION_NAME:-ca-jobengine-notificationservice}"
+
+          echo "Resolved Container App names (staging):"
+          echo "gateway=$gateway_app"
+          echo "auth=$auth_app"
+          echo "job=$job_app"
+          echo "worker=$worker_app"
+          echo "execution=$execution_app"
+          echo "notification=$notification_app"
 
           az containerapp update --name "$gateway_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-gateway:$IMAGE_TAG"
           az containerapp update --name "$auth_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-auth-service:$IMAGE_TAG"
@@ -178,7 +186,15 @@ jobs:
           job_app="${CA_JOB_NAME:-ca-jobengine-job-service}"
           worker_app="${CA_WORKER_NAME:-ca-jobengine-worker-service}"
           execution_app="${CA_EXECUTION_NAME:-ca-jobengine-execution-service}"
-          notification_app="${CA_NOTIFICATION_NAME:-ca-jobengine-notification-service}"
+          notification_app="${CA_NOTIFICATION_NAME:-ca-jobengine-notificationservice}"
+
+          echo "Resolved Container App names (production):"
+          echo "gateway=$gateway_app"
+          echo "auth=$auth_app"
+          echo "job=$job_app"
+          echo "worker=$worker_app"
+          echo "execution=$execution_app"
+          echo "notification=$notification_app"
 
           az containerapp update --name "$gateway_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-gateway:$IMAGE_TAG"
           az containerapp update --name "$auth_app" --resource-group "$AZURE_RG" --image "$ACR_LOGIN_SERVER/jobengine-auth-service:$IMAGE_TAG"
