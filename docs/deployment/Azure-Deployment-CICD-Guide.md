@@ -327,8 +327,29 @@ Set frontend API base URL:
    - `ACR_NAME`
    - `ACR_LOGIN_SERVER`
    - `AZURE_RG`
+   - `STAGING_GATEWAY_HEALTH_URL` (optional, used by staging smoke-check step)
 
-### 9.2 Environments + Approval Gate
+### 9.2 Repository Variables (for Container App names)
+
+If your Azure Container App names are different from defaults, add GitHub Actions variables:
+
+- `CA_GATEWAY_NAME`
+- `CA_AUTH_NAME`
+- `CA_JOB_NAME`
+- `CA_WORKER_NAME`
+- `CA_EXECUTION_NAME`
+- `CA_NOTIFICATION_NAME`
+
+Default names used when variables are not set:
+
+- `ca-jobengine-gateway`
+- `ca-jobengine-auth-service`
+- `ca-jobengine-job-service`
+- `ca-jobengine-worker-service`
+- `ca-jobengine-execution-service`
+- `ca-jobengine-notificationservice`
+
+### 9.3 Environments + Approval Gate
 
 1. In GitHub repo settings, open `Environments`.
 2. Click `New environment`, create `staging`.
