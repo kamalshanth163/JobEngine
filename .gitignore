@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Windows null-device artifact from shell redirection in Git Bash
+NUL
+
 # User-specific files
 *.rsuser
 *.suo
